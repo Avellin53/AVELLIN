@@ -1,41 +1,10 @@
 import React from 'react';
-import { MapPin, Sparkles, Heart, Store, ArrowRight } from 'lucide-react';
+import { MapPin, Sparkles, Store, ArrowRight } from 'lucide-react';
+import { fetchFeedProducts } from '@/lib/mockData';
+import ProductCard from '@/components/product/ProductCard';
 
-export default function BrowseFeed() {
-  const products = [
-    {
-      id: 1,
-      brand: "STUDIO KOYA • LAGOS",
-      title: "Architectural Terracotta Blazer",
-      price: "₦145,000",
-      badge: "✨ 98% Fits You",
-      badgeType: "ai"
-    },
-    {
-      id: 2,
-      brand: "TARI SKIN • ACCRA",
-      title: "Shea Butter Cleanser",
-      price: "₦12,500",
-      badge: "Clean Formula",
-      badgeType: "eco"
-    },
-    {
-      id: 3,
-      brand: "NALI • DAKAR",
-      title: "Handwoven Rafia Tote",
-      price: "₦45,000",
-      badge: "Trending",
-      badgeType: "trending"
-    },
-    {
-      id: 4,
-      brand: "KENTE CO • NAIROBI",
-      title: "Indigo Dye Denim Jacket",
-      price: "₦98,000",
-      badge: "✨ 95% Fits You",
-      badgeType: "ai"
-    }
-  ];
+export default async function BrowseFeed() {
+  const products = await fetchFeedProducts();
 
   return (
     <div className="px-5 pt-4 pb-8 flex flex-col space-y-6">
@@ -60,33 +29,7 @@ export default function BrowseFeed() {
       {/* 2. The 2-Column Product Grid */}
       <div className="grid grid-cols-2 gap-3.5">
         {products.map((product) => (
-          <div key={product.id} className="bg-linen-card rounded-2xl border border-linen-border p-2 flex flex-col gap-2.5 shadow-sm group">
-            {/* Image Section */}
-            <div className="bg-linen-sand rounded-xl relative aspect-[3/4] w-full overflow-hidden">
-              {/* Top Left Badge */}
-              <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-sm whitespace-nowrap ${
-                product.badgeType === 'ai' 
-                  ? 'bg-white text-ochre' 
-                  : product.badgeType === 'eco' 
-                    ? 'bg-palm text-white' 
-                    : 'bg-white text-terracotta'
-              }`}>
-                {product.badge}
-              </div>
-              
-              {/* Top Right Heart */}
-              <button className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm text-warmgrey hover:text-terracotta transition">
-                <Heart size={14} />
-              </button>
-            </div>
-
-            {/* Text Section */}
-            <div className="flex flex-col gap-0.5 px-0.5">
-              <span className="text-[10px] text-warmgrey uppercase font-bold tracking-wider">{product.brand}</span>
-              <h3 className="text-xs font-bold text-charcoal line-clamp-1">{product.title}</h3>
-              <p className="text-sm font-extrabold text-charcoal mt-0.5">{product.price}</p>
-            </div>
-          </div>
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
 
