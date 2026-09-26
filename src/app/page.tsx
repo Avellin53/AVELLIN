@@ -1,55 +1,42 @@
 import React from 'react';
-import { MapPin, Sparkles, Store, ArrowRight } from 'lucide-react';
-import { fetchFeedProducts } from '@/lib/mockData';
-import ProductCard from '@/components/product/ProductCard';
+import Link from 'next/link';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
-export default async function BrowseFeed() {
-  const products = await fetchFeedProducts();
-
+export default function LandingPage() {
   return (
-    <div className="px-5 pt-4 pb-8 flex flex-col space-y-6">
+    <div className="flex flex-col min-h-[70vh] px-6 justify-center items-center text-center space-y-8 bg-linen relative">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-ochre/20 via-linen to-linen/0 z-0 opacity-60"></div>
       
-      {/* 1. Quick Filter Bar */}
-      <div className="flex items-center gap-3 w-full">
-        <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <button className="flex items-center gap-1.5 whitespace-nowrap bg-white border border-linen-pillBorder rounded-full px-3 py-1.5 shadow-sm text-[11px] font-semibold text-charcoal hover:bg-linen-surface transition">
-            <MapPin size={12} className="text-warmgrey" />
-            All Hubs (Lagos, Nairobi, Dakar...)
-          </button>
-          <button className="flex items-center gap-1.5 whitespace-nowrap bg-white border border-linen-pillBorder rounded-full px-3 py-1.5 shadow-sm text-[11px] font-semibold text-charcoal hover:bg-linen-surface transition">
-            In Stock
-          </button>
+      <div className="z-10 flex flex-col items-center max-w-sm mx-auto space-y-6">
+        <div className="bg-white border border-linen-border px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 mb-4">
+          <Sparkles size={14} className="text-ochre" />
+          <span className="text-xs font-bold text-charcoal tracking-wide">AVELLIN AI STUDIO</span>
         </div>
-        <button className="flex-shrink-0 flex items-center gap-1.5 bg-ochre/15 border border-ochre-border rounded-full px-3 py-1.5 shadow-sm text-[11px] font-bold text-ochre hover:bg-ochre/25 transition">
-          <Sparkles size={12} />
-          AI Matched
-        </button>
+        
+        <h1 className="text-4xl font-extrabold text-charcoal leading-tight">
+          Find your perfect fit with Avellin.
+        </h1>
+        
+        <p className="text-sm font-medium text-charcoal-secondary leading-relaxed">
+          Let&apos;s personalize your fashion journey using our advanced biometric AI matching algorithm.
+        </p>
       </div>
 
-      {/* 2. The 2-Column Product Grid */}
-      <div className="grid grid-cols-2 gap-3.5">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+      <div className="z-10 flex flex-col w-full space-y-3 mt-10">
+        <Link 
+          href="/onboarding/measurements"
+          className="w-full bg-terracotta text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-lg shadow-terracotta/20 hover:bg-terracotta-dark transition"
+        >
+          Let&apos;s Find My Fit
+          <ArrowRight size={18} />
+        </Link>
+        <Link 
+          href="/browse"
+          className="w-full bg-white text-charcoal border border-linen-border rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-sm hover:bg-linen-surface transition"
+        >
+          Browse Collection First
+        </Link>
       </div>
-
-      {/* 3. Vendor Callout Card */}
-      <div className="bg-white border border-linen-border rounded-2xl p-4 w-full flex items-center gap-4 shadow-sm hover:border-warmgrey/30 transition cursor-pointer group">
-        <div className="bg-linen-surface p-3 rounded-full flex-shrink-0 border border-linen-border group-hover:bg-terracotta-tint group-hover:border-terracotta/20 transition">
-          <Store size={20} className="text-charcoal group-hover:text-terracotta transition" />
-        </div>
-        <div className="flex flex-col">
-          <h4 className="font-bold text-sm text-charcoal">Sell on Avellin</h4>
-          <p className="text-[11px] text-warmgrey mt-0.5 leading-snug">
-            Are you an African designer or beauty brand? List your label on Avellin.
-          </p>
-          <div className="text-terracotta text-xs font-bold mt-1.5 flex items-center gap-1 group-hover:underline">
-            Apply as Vendor
-            <ArrowRight size={12} />
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }
