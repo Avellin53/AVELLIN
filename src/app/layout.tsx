@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { Toaster } from 'sonner';
 
 const plusJakarta = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${plusJakarta.variable} font-sans bg-linen text-charcoal flex justify-center min-h-screen`}>
         <div className="w-full max-w-[420px] bg-linen relative flex flex-col min-h-screen shadow-2xl">
           {children}
+          <Toaster position="top-center" />
         </div>
       </body>
     </html>

@@ -1,0 +1,94 @@
+'use client';
+
+import React, { useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, UserCheck } from 'lucide-react';
+import Link from 'next/link';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+    
+    // Check if vendor or shopper
+    const { data: vendorData } = await supabase.from('vendors').select('id').eq('id', data.user.id).single();
+    if (vendorData) {
+      router.push('/vendor');
+    } else {
+      router.push('/browse');
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen">
+      <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-linen-border">
+        <h1 className="text-2xl font-bold text-charcoal mb-2">Welcome Back</h1>
+        <p className="text-sm text-charcoal-secondary mb-6">Log in to your Avellin account</p>
+        
+        {error && <div className="bg-terracotta/10 text-terracotta text-sm p-3 rounded-xl mb-4">{error}</div>}
+        
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-charcoal mb-1">Email</label>
+            <input 
+              type="email" 
+              required 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-12 bg-linen-surface border border-linen-border rounded-xl px-4 text-sm focus:outline-none focus:border-terracotta transition"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-charcoal mb-1">Password</label>
+            <input 
+              type="password" 
+              required 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-12 bg-linen-surface border border-linen-border rounded-xl px-4 text-sm focus:outline-none focus:border-terracotta transition"
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full h-12 bg-terracotta text-white rounded-xl font-bold text-sm shadow-md hover:bg-terracotta-dark transition flex justify-center items-center gap-2"
+          >
+            {loading ? 'Logging in...' : 'Log In'}
+            {!loading && <ArrowRight size={16} />}
+          </button>
+        </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-xs text-charcoal-secondary">
+            Don&apos;t have an account? <Link href="/register" className="text-terracotta font-bold hover:underline">Sign up</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
