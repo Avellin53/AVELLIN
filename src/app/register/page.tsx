@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ChevronLeft, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -22,6 +22,7 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleNext = () => setStep(s => s + 1);
@@ -43,7 +44,11 @@ export default function RegisterPage() {
     });
     
     if (authError) {
-      setError(authError.message);
+      if (authError.message.includes('already registered')) {
+        setError('An account with these details already exists. Please log in.');
+      } else {
+        setError(authError.message);
+      }
       setLoading(false);
       return;
     }
@@ -114,7 +119,16 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-charcoal mb-1">Password</label>
-                <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full h-12 bg-linen-surface border border-linen-border rounded-xl px-4 text-sm focus:border-terracotta outline-none" />
+                <div className="relative">
+                  <input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full h-12 bg-linen-surface border border-linen-border rounded-xl px-4 pr-12 text-sm focus:border-terracotta outline-none" />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-warmgrey hover:text-charcoal transition"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <button onClick={handleNext} disabled={!formData.email || !formData.password || !formData.fullName} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">Next <ArrowRight size={16} /></button>
             </div>

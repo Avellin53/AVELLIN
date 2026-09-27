@@ -19,14 +19,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  // 1. Get authenticated user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   
-  if (!session) {
+  if (authError || !user) {
     redirect('/login');
   }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+  // 2. Fetch the user's explicit role from the profiles table
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
 
+  // 3. Strictly block non-admins
   if (!profile || profile.role !== 'admin') {
     redirect('/browse');
   }
