@@ -44,7 +44,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen">
+    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen w-full max-w-[420px] mx-auto shadow-2xl">
       <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-linen-border">
         <h1 className="text-2xl font-bold text-charcoal mb-2">Welcome Back</h1>
         <p className="text-sm text-charcoal-secondary mb-6">Log in to your Avellin account</p>

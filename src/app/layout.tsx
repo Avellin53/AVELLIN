@@ -16,11 +16,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${plusJakarta.variable} font-sans bg-linen text-charcoal flex justify-center min-h-screen`}>
-        <div className="w-full max-w-[420px] bg-linen relative flex flex-col min-h-screen shadow-2xl">
-          {children}
-          <Toaster position="top-center" />
-        </div>
+      <body className={`${plusJakarta.variable} font-sans bg-linen text-charcoal min-h-screen`}>
+        {children}
+        <Toaster position="top-center" />
       </body>
     </html>
   );

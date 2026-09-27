@@ -81,7 +81,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen relative">
+    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen relative w-full max-w-[420px] mx-auto shadow-2xl">
       <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-linen-border relative">
         {step > 1 && (
           <button onClick={handleBack} className="absolute top-6 left-6 text-charcoal-secondary hover:text-charcoal transition">

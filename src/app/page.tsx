@@ -4,7 +4,7 @@ import { Sparkles, ArrowRight, ShieldCheck, Zap, UserCheck } from 'lucide-react'
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen px-6 py-12 items-center text-center space-y-12 bg-linen relative overflow-hidden">
+    <div className="flex flex-col min-h-screen px-6 py-12 items-center text-center space-y-12 bg-linen relative overflow-hidden w-full max-w-[420px] mx-auto shadow-2xl">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-ochre/20 via-linen to-linen/0 z-0 opacity-60"></div>
       
       <div className="z-10 flex flex-col items-center max-w-sm mx-auto space-y-6 mt-10">
