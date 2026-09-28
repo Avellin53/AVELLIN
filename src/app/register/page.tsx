@@ -78,8 +78,8 @@ export default function RegisterPage() {
       });
     }
 
-    // Redirect to login
-    router.push('/login');
+    // Redirect to verify
+    router.push('/verify?email=' + encodeURIComponent(formData.email));
   };
 
   return (
@@ -192,7 +192,7 @@ export default function RegisterPage() {
               <p className="text-sm text-charcoal-secondary">We have generated your Avellin AI profile.</p>
               
               <button onClick={handleSubmit} disabled={loading} className="w-full h-12 bg-terracotta text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">
-                {loading ? 'Saving...' : 'Finish & Login'} <ArrowRight size={16} />
+                {loading ? 'Saving...' : 'Finish & Verify Email'} <ArrowRight size={16} />
               </button>
             </div>
           )}
