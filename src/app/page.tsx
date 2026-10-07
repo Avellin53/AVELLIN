@@ -1,164 +1,132 @@
-import React from 'react';
-import Link from 'next/link';
-import { ShieldCheck, MapPin } from 'lucide-react';
+"use client";
 
-export default function LandingPage() {
-  return (
-    <div className="flex flex-col min-h-screen items-center bg-linen relative overflow-x-hidden w-full max-w-[420px] mx-auto shadow-2xl">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-ochre/20 via-linen to-linen/0 z-0 opacity-60 pointer-events-none"></div>
+import React, { useState, useRef } from 'react';
+import { Camera, Send } from 'lucide-react';
+
+type Message = {
+  id: string;
+  sender: 'ai' | 'user';
+  text: string;
+  action?: 'upload_receipt';
+};
+
+export default function ChatPage() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      sender: 'ai',
+      text: 'Welcome back! Please upload your payment receipt so I can verify your deposit.',
+      action: 'upload_receipt'
+    }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      // Simulate the AI instantly responding to the uploaded file
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          sender: 'ai',
+          text: "Verified! I've logged your 2,500 naira deposit. Great job keeping the streak alive!"
+        }
+      ]);
       
-      {/* Scrollable Content Area */}
-      <div className="flex-1 w-full overflow-y-auto px-5 pt-12 pb-48 z-10 flex flex-col space-y-10 scrollbar-none">
-        
-        {/* 1. Header & Brand Identity */}
-        <div className="flex flex-col items-center text-center space-y-5 mt-4">
-          <div className="bg-ochre/10 text-ochre border border-ochre/20 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-            <span>✨</span> Curated African Fashion & Clean Beauty
-          </div>
-          
-          <div className="space-y-3">
-            <h1 className="text-5xl font-black text-charcoal tracking-tighter">
-              AVELLIN
-            </h1>
-            <h2 className="text-xl font-extrabold text-charcoal leading-snug px-2">
-              African Luxury, Cut to Your Exact Silhouette.
-            </h2>
-          </div>
-          
-          <p className="text-[13px] font-medium text-charcoal-secondary leading-relaxed px-4">
-            Shop curated pieces from verified ateliers across Lagos, Nairobi, Accra, and Dakar — precision-matched to your biometrics.
-          </p>
-        </div>
+      // Reset input so the user can upload again if needed
+      e.target.value = '';
+    }
+  };
 
-        {/* 2. High-Energy Visual Showcase */}
-        <div className="w-full -mx-5 px-5">
-          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-4 py-2 snap-x snap-mandatory pr-5">
-            
-            {/* Card 1 */}
-            <div className="w-40 flex-shrink-0 bg-white rounded-2xl p-2.5 border border-linen-border shadow-sm snap-start relative group">
-              <div className="aspect-[4/5] bg-stone-100 rounded-xl relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="bg-white/90 backdrop-blur-md self-start rounded-full px-2 py-0.5 text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                  Lagos • Atelier
-                </div>
-              </div>
-              <div className="pt-3 pb-1">
-                <h3 className="text-xs font-extrabold text-charcoal truncate">Silk Adire Midi</h3>
-                <p className="text-xs font-bold text-warmgrey mt-0.5">₦110,000</p>
-              </div>
-              <div className="absolute -top-2 -right-2 bg-charcoal text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg border border-charcoal/50 flex items-center gap-1 z-20">
-                ✨ 98% Fit Score
-              </div>
-            </div>
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+    
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sender: 'user',
+        text: inputValue.trim()
+      }
+    ]);
+    setInputValue('');
+  };
 
-            {/* Card 2 */}
-            <div className="w-40 flex-shrink-0 bg-white rounded-2xl p-2.5 border border-linen-border shadow-sm snap-start relative">
-              <div className="aspect-[4/5] bg-stone-100 rounded-xl relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="bg-white/90 backdrop-blur-md self-start rounded-full px-2 py-0.5 text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                  Accra • Clean Beauty
-                </div>
-              </div>
-              <div className="pt-3 pb-1">
-                <h3 className="text-xs font-extrabold text-charcoal truncate">Raw Shea Cleanser</h3>
-                <p className="text-xs font-bold text-warmgrey mt-0.5">₦12,500</p>
-              </div>
-            </div>
-
-            {/* Card 3 */}
-            <div className="w-40 flex-shrink-0 bg-white rounded-2xl p-2.5 border border-linen-border shadow-sm snap-start relative">
-              <div className="aspect-[4/5] bg-stone-100 rounded-xl relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="bg-white/90 backdrop-blur-md self-start rounded-full px-2 py-0.5 text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                  Nairobi • Bespoke
-                </div>
-              </div>
-              <div className="pt-3 pb-1">
-                <h3 className="text-xs font-extrabold text-charcoal truncate">Terracotta Linen Trench</h3>
-                <p className="text-xs font-bold text-warmgrey mt-0.5">₦145,000</p>
-              </div>
-              <div className="absolute -top-2 -right-2 bg-charcoal text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg border border-charcoal/50 flex items-center gap-1 z-20">
-                ✨ 98% Fit Score
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* 3. Revamped "Why AVELLIN?" Comparison */}
-        <div className="bg-white rounded-2xl border border-linen-border p-5 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-terracotta/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-          
-          <h2 className="text-[15px] font-extrabold text-charcoal mb-6 relative z-10">The Smart Marketplace Difference</h2>
-          
-          <div className="space-y-6 relative z-10">
-            {/* Row 1 */}
-            <div className="flex gap-4 opacity-40 grayscale pb-6 border-b border-linen-border/60">
-              <div className="mt-0.5 bg-stone-100 p-2.5 rounded-xl border border-stone-200 self-start">
-                <div className="w-5 h-5 border-2 border-warmgrey rounded-md"></div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xs font-bold text-charcoal line-through decoration-warmgrey">Standard E-Commerce</h3>
-                <p className="text-[11px] font-medium text-charcoal-secondary mt-1.5 leading-relaxed">
-                  Standard size charts, endless return hassles, and unverified overseas dropshipping.
-                </p>
-              </div>
-            </div>
-            
-            {/* Row 2 */}
-            <div className="flex gap-4">
-              <div className="mt-0.5 bg-terracotta/5 p-3 rounded-xl border border-terracotta/15 self-start shadow-sm">
-                <ShieldCheck size={20} className="text-terracotta" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xs font-bold text-terracotta-dark">The Avellin Standard</h3>
-                <p className="text-[11px] font-bold text-charcoal mt-1.5 leading-relaxed">
-                  3D biometric sizing calibrated to African tailoring, climate-optimized skincare, and 100% verified regional designers.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Market Trust Counters */}
-        <div className="flex flex-col gap-3">
-          <div className="bg-linen-surface rounded-xl border border-linen-border p-4 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-charcoal">4 Regional Hubs</span>
-            <span className="text-[9px] font-extrabold text-warmgrey bg-white px-2 py-1 rounded-md border border-linen-border uppercase">LOS • NBO • ACC • DKR</span>
-          </div>
-          <div className="bg-linen-surface rounded-xl border border-linen-border p-4 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-charcoal">100% Verified Ateliers</span>
-            <span className="text-[9px] font-extrabold text-terracotta bg-terracotta/10 px-2 py-1 rounded-md border border-terracotta/20 uppercase">Guaranteed</span>
-          </div>
-          <div className="bg-linen-surface rounded-xl border border-linen-border p-4 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-charcoal">Zero Sizing Guesswork</span>
-            <span className="text-[9px] font-extrabold text-charcoal bg-white px-2 py-1 rounded-md border border-linen-border uppercase">AI Calibrated</span>
-          </div>
-        </div>
-
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 relative max-w-[420px] mx-auto shadow-2xl">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl px-5 py-4 border-b border-slate-200">
+        <h1 className="text-xl font-bold text-slate-800">AI Assistant</h1>
       </div>
 
-      {/* 5. Sticky Bottom Action Bar */}
-      <div className="absolute bottom-0 w-full max-w-[420px] bg-white/95 backdrop-blur-xl border-t border-linen-border p-5 pb-8 z-50 flex flex-col gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
-        <div className="flex flex-col gap-3">
-          <Link 
-            href="/register"
-            className="w-full bg-terracotta text-white rounded-xl h-[52px] flex items-center justify-center gap-2 font-semibold text-[15px] shadow-md hover:bg-terracotta-dark transition transform active:scale-[0.98]"
-          >
-            Create Account
-          </Link>
-          <Link 
-            href="/login"
-            className="w-full bg-white text-charcoal border border-linen-border rounded-xl h-[52px] flex items-center justify-center font-semibold text-[15px] hover:bg-linen-surface transition transform active:scale-[0.98]"
-          >
-            Sign In
-          </Link>
-        </div>
-        
-        <div className="mt-3 text-center">
-          <Link href="/vendor" className="text-[11px] font-semibold text-charcoal hover:text-terracotta transition">
-            Are you an African designer? Apply to sell &rarr;
-          </Link>
-        </div>
+      {/* Chat Feed */}
+      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
+        {messages.map((msg) => {
+          const isAI = msg.sender === 'ai';
+          return (
+            <div key={msg.id} className={`flex w-full ${isAI ? 'justify-start' : 'justify-end'}`}>
+              <div 
+                className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
+                  isAI 
+                    ? 'bg-slate-200 text-slate-800 rounded-bl-sm' 
+                    : 'bg-emerald-600 text-white rounded-br-sm'
+                }`}
+              >
+                <p className="text-[15px] leading-relaxed">{msg.text}</p>
+                
+                {/* Interactive Action Button inside AI Bubble */}
+                {msg.action === 'upload_receipt' && (
+                  <div className="mt-3">
+                    <button 
+                      onClick={handleUploadClick}
+                      className="flex items-center justify-center gap-2 w-full bg-white border border-slate-300 rounded-xl py-2 px-3 hover:bg-slate-50 transition active:scale-[0.98] shadow-sm"
+                    >
+                      <Camera className="w-4 h-4 text-slate-600" />
+                      <span className="text-sm font-semibold text-slate-700">Upload Screenshot</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
+      {/* Hidden File Input */}
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        onChange={handleFileChange}
+        className="hidden" 
+      />
+
+      {/* Input Area */}
+      <div className="bg-white border-t border-slate-200 p-4 sticky bottom-0">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 relative">
+          <input 
+            type="text" 
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Type a message..." 
+            className="flex-1 bg-slate-100 text-slate-800 rounded-full py-3 px-4 outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all placeholder:text-slate-400"
+          />
+          <button 
+            type="submit"
+            disabled={!inputValue.trim()}
+            className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-700 transition"
+          >
+            <Send className="w-5 h-5 ml-1" />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
