@@ -4,6 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { ArrowRight, MailCheck } from 'lucide-react';
+import { toast } from 'sonner';
 
 function VerifyContent() {
   const searchParams = useSearchParams();
@@ -38,6 +39,7 @@ function VerifyContent() {
       return;
     }
 
+    toast.success('Email verified successfully! Please log in.');
     // Success - Redirect to login
     router.push('/login');
   };

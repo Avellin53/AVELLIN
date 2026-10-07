@@ -9,7 +9,7 @@ import Link from 'next/link';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | React.ReactNode>('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
@@ -27,7 +27,18 @@ export default function LoginPage() {
     });
     
     if (error) {
-      setError(error.message);
+      if (error.message.includes('Email not confirmed')) {
+        setError(
+          <span>
+            Email not verified.{' '}
+            <Link href={`/verify?email=${encodeURIComponent(email)}`} className="underline font-bold text-terracotta">
+              Click here to enter your verification code
+            </Link>
+          </span>
+        );
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
       return;
     }
