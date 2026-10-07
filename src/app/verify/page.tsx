@@ -15,7 +15,7 @@ function VerifyContent() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [cooldown, setCountdown] = useState(0);
+  const [cooldown, setCountdown] = useState(60);
 
   useEffect(() => {
     if (cooldown > 0) {
