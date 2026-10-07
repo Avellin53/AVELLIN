@@ -65,9 +65,9 @@ function VerifyContent() {
       return;
     }
 
-    toast.success('Email verified successfully! Please log in.');
-    // Success - Redirect to login
-    router.push('/login');
+    toast.success('Email verified successfully!');
+    // Success - Redirect to home
+    router.push('/home');
   };
 
   return (

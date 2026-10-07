@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Camera, ShoppingCart } from 'lucide-react';
+import { Bell, Search, Camera, ShoppingCart, ChevronLeft } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function TopHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -12,6 +13,10 @@ export default function TopHeader() {
   const [activeCategory, setActiveCategory] = useState('Fashion');
   const [categories, setCategories] = useState<string[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
+  
+  const pathname = usePathname();
+  const router = useRouter();
+  const showBack = pathname !== '/home' && pathname !== '/';
   
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +60,9 @@ export default function TopHeader() {
           {/* Brand Row */}
           <div className="flex items-center justify-between h-[44px]">
             <div className="flex items-center gap-2">
+              {showBack && (
+                <ChevronLeft onClick={() => router.back()} className="cursor-pointer text-charcoal" />
+              )}
               <h1 className="font-extrabold text-2xl tracking-tighter text-charcoal">Avellin</h1>
               <span className="px-2 py-0.5 rounded-full bg-terracotta-tint text-terracotta text-[10px] font-bold tracking-wider">
                 AI STUDIO

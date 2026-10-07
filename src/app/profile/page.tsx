@@ -27,15 +27,15 @@ export default async function ProfilePage() {
     <div className="flex flex-col h-screen px-6 pt-12 pb-24 relative max-w-[420px] mx-auto bg-linen">
       <h1 className="text-2xl font-bold text-charcoal mb-8">Your Profile</h1>
       
+      <div className="flex flex-col items-center mb-8">
+        <div className="w-20 h-20 bg-neutral-200 text-neutral-600 rounded-full flex items-center justify-center text-3xl font-bold mb-3 shadow-sm border border-neutral-300">
+          {(profile?.name || 'U').charAt(0).toUpperCase()}
+        </div>
+        <h2 className="text-2xl font-semibold text-neutral-900">{profile?.name || 'Unknown User'}</h2>
+        <p className="text-sm text-neutral-500 mt-1">{profile?.email || user.email}</p>
+      </div>
+
       <div className="bg-white rounded-2xl border border-linen-border p-5 shadow-sm mb-6 flex flex-col gap-4">
-        <div>
-          <span className="block text-[10px] font-bold text-warmgrey uppercase tracking-wider mb-0.5">Full Name</span>
-          <span className="text-sm font-semibold text-charcoal">{profile?.name || 'N/A'}</span>
-        </div>
-        <div>
-          <span className="block text-[10px] font-bold text-warmgrey uppercase tracking-wider mb-0.5">Email Address</span>
-          <span className="text-sm font-semibold text-charcoal">{profile?.email || user.email}</span>
-        </div>
         <div>
           <span className="block text-[10px] font-bold text-warmgrey uppercase tracking-wider mb-0.5">Account Role</span>
           <span className="text-sm font-semibold text-charcoal capitalize">{profile?.role || 'Shopper'}</span>

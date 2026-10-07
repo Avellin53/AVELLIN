@@ -41,7 +41,7 @@ export default function LoginPage() {
     if (vendorData) {
       router.push('/vendor');
     } else {
-      router.push('/browse');
+      router.push('/home');
     }
   };
 
