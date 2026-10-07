@@ -4,16 +4,17 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import SignOutButton from './SignOutButton';
 import BackButton from '@/components/ui/BackButton';
+import Link from 'next/link';
 import { Package, Inbox, Heart, Store, BookUser, UserCog, UserX, ChevronRight } from 'lucide-react';
 
-const MenuItem = ({ icon: Icon, label }: { icon: any, label: string }) => (
-  <div className="flex justify-between items-center px-4 py-4 border-b border-neutral-100 bg-white hover:bg-neutral-50 cursor-pointer transition">
+const MenuItem = ({ icon: Icon, label, href }: { icon: any, label: string, href: string }) => (
+  <Link href={href} className="flex justify-between items-center px-4 py-4 border-b border-neutral-100 bg-white hover:bg-neutral-50 cursor-pointer transition">
     <div className="flex items-center gap-3">
       {Icon && <Icon size={20} className="text-neutral-500" />}
       <span className="text-sm font-medium text-neutral-800">{label}</span>
     </div>
     <ChevronRight size={18} className="text-neutral-400" />
-  </div>
+  </Link>
 );
 
 export default async function ProfilePage() {
@@ -51,10 +52,10 @@ export default async function ProfilePage() {
       {/* My Avellin Account */}
       <div className="mt-2 bg-white">
         <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">My Avellin Account</h2>
-        <MenuItem icon={Package} label="Orders" />
-        <MenuItem icon={Inbox} label="Inbox" />
-        <MenuItem icon={Heart} label="Saved Items" />
-        <MenuItem icon={Store} label="Followed Ateliers" />
+        <MenuItem href="/profile/orders" icon={Package} label="Orders" />
+        <MenuItem href="/profile/inbox" icon={Inbox} label="Inbox" />
+        <MenuItem href="/profile/saved" icon={Heart} label="Saved Items" />
+        <MenuItem href="/profile/following" icon={Store} label="Followed Ateliers" />
       </div>
 
       <div className="w-full h-2 bg-neutral-100"></div>
@@ -62,9 +63,9 @@ export default async function ProfilePage() {
       {/* My Settings */}
       <div className="bg-white">
         <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">My Settings</h2>
-        <MenuItem icon={BookUser} label="Address Book" />
-        <MenuItem icon={UserCog} label="Account Management" />
-        <MenuItem icon={UserX} label="Close Account" />
+        <MenuItem href="/profile/address" icon={BookUser} label="Address Book" />
+        <MenuItem href="/profile/settings" icon={UserCog} label="Account Management" />
+        <MenuItem href="/profile/close" icon={UserX} label="Close Account" />
       </div>
 
       {/* Logout */}
