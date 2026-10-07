@@ -3,8 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import { checkUserExists } from '@/app/actions/auth';
 import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+
+const NIGERIAN_STATES = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
+  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", 
+  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", 
+  "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", 
+  "Taraba", "Yobe", "Zamfara"
+];
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -21,7 +30,7 @@ export default function RegisterPage() {
     // Vendor fields
     brandName: '',
     brandDescription: '',
-    hubLocation: 'Lagos',
+    hubLocation: '',
     businessEmail: '',
     phoneNumber: '',
     portfolioLink: '',
@@ -31,6 +40,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [nameStatus, setNameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [locationQuery, setLocationQuery] = useState('');
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,9 +51,8 @@ export default function RegisterPage() {
     }
     const timer = setTimeout(async () => {
       setNameStatus('checking');
-      const supabase = createClient();
-      const { data } = await supabase.from('profiles').select('id').eq('name', formData.fullName).maybeSingle();
-      setNameStatus(data ? 'unavailable' : 'available');
+      const exists = await checkUserExists('name', formData.fullName);
+      setNameStatus(exists ? 'unavailable' : 'available');
     }, 500);
     return () => clearTimeout(timer);
   }, [formData.fullName]);
@@ -54,9 +64,8 @@ export default function RegisterPage() {
     }
     const timer = setTimeout(async () => {
       setEmailStatus('checking');
-      const supabase = createClient();
-      const { data } = await supabase.from('profiles').select('id').eq('email', formData.email).maybeSingle();
-      setEmailStatus(data ? 'unavailable' : 'available');
+      const exists = await checkUserExists('email', formData.email);
+      setEmailStatus(exists ? 'unavailable' : 'available');
     }, 500);
     return () => clearTimeout(timer);
   }, [formData.email]);
@@ -272,16 +281,40 @@ export default function RegisterPage() {
                 <label className="block text-xs font-bold text-charcoal mb-1">Brand Name</label>
                 <input type="text" value={formData.brandName} onChange={e => setFormData({...formData, brandName: e.target.value})} placeholder="E.g., Ozwald Studio" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold text-charcoal mb-1">Hub Location</label>
-                <select value={formData.hubLocation} onChange={e => setFormData({...formData, hubLocation: e.target.value})} className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition appearance-none">
-                  <option value="Lagos">Lagos</option>
-                  <option value="Nairobi">Nairobi</option>
-                  <option value="Dakar">Dakar</option>
-                  <option value="Accra">Accra</option>
-                  <option value="Cape Town">Cape Town</option>
-                  <option value="Johannesburg">Johannesburg</option>
-                </select>
+                <input 
+                  type="text" 
+                  value={locationQuery} 
+                  onChange={e => {
+                    setLocationQuery(e.target.value);
+                    setShowLocationDropdown(true);
+                  }} 
+                  onFocus={() => setShowLocationDropdown(true)}
+                  placeholder="E.g., Lagos" 
+                  className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" 
+                />
+                {showLocationDropdown && locationQuery.length > 0 && (
+                  <ul className="absolute z-50 w-full mt-1 bg-white border border-linen-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {NIGERIAN_STATES.filter(state => state.toLowerCase().includes(locationQuery.toLowerCase())).length > 0 ? (
+                      NIGERIAN_STATES.filter(state => state.toLowerCase().includes(locationQuery.toLowerCase())).map(state => (
+                        <li 
+                          key={state} 
+                          className="px-4 py-3 text-sm text-charcoal hover:bg-linen-surface cursor-pointer transition-colors border-b border-linen-border last:border-0"
+                          onClick={() => {
+                            setFormData({...formData, hubLocation: state});
+                            setLocationQuery(state);
+                            setShowLocationDropdown(false);
+                          }}
+                        >
+                          {state}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="px-4 py-3 text-sm text-warmgrey">No states found</li>
+                    )}
+                  </ul>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-bold text-charcoal mb-1">Short Description</label>
