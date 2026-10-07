@@ -11,92 +11,40 @@ export default function LandingPage() {
       <div className="flex-1 w-full overflow-y-auto px-5 pt-12 pb-48 z-10 flex flex-col space-y-10 scrollbar-none">
         
         {/* 1. Header & Brand Identity */}
-        <div className="flex flex-col items-center text-center space-y-5 mt-4">
+        <div className="flex flex-col items-center text-center space-y-5 mt-10 mb-6">
           <div className="bg-ochre/10 text-ochre border border-ochre/20 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
             <span>✨</span> African Fashion & Beauty
           </div>
           
           <div className="space-y-3">
-            <h1 className="text-5xl font-black text-charcoal tracking-tighter">
+            <h1 className="text-5xl font-black text-neutral-900 tracking-tighter">
               AVELLIN
             </h1>
-            <h2 className="text-xl font-extrabold text-charcoal leading-snug px-2">
+            <h2 className="text-xl font-extrabold text-neutral-900 leading-snug px-2">
               Find Your Perfect Fit.
             </h2>
           </div>
           
-          <p className="text-[13px] font-medium text-charcoal-secondary leading-relaxed px-4">
+          <p className="text-[13px] font-medium text-neutral-600 leading-relaxed px-4">
             Shop verified African designers. Our AI matches you with clothes that fit your exact body measurements.
           </p>
         </div>
 
-        {/* 2. High-Energy Visual Showcase */}
-        <div className="w-full -mx-5 px-5">
-          <div className="flex gap-3 overflow-x-auto scrollbar-none pb-4 py-2 snap-x snap-mandatory pr-5">
-            
-            {/* Card 1 */}
-            <div className="w-40 flex-shrink-0 bg-white rounded-2xl p-2.5 border border-linen-border shadow-sm snap-start relative group">
-              <div className="aspect-[4/5] bg-stone-100 rounded-xl relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="bg-white/90 backdrop-blur-md self-start rounded-full px-2 py-0.5 text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                  Lagos • Atelier
-                </div>
-              </div>
-              <div className="pt-3 pb-1">
-                <h3 className="text-xs font-extrabold text-charcoal truncate">Silk Adire Midi</h3>
-                <p className="text-xs font-bold text-warmgrey mt-0.5">₦110,000</p>
-              </div>
-              <div className="absolute -top-2 -right-2 bg-charcoal text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg border border-charcoal/50 flex items-center gap-1 z-20">
-                ✨ 98% Fit Score
-              </div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="w-40 flex-shrink-0 bg-white rounded-2xl p-2.5 border border-linen-border shadow-sm snap-start relative">
-              <div className="aspect-[4/5] bg-stone-100 rounded-xl relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="bg-white/90 backdrop-blur-md self-start rounded-full px-2 py-0.5 text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                  Accra • Clean Beauty
-                </div>
-              </div>
-              <div className="pt-3 pb-1">
-                <h3 className="text-xs font-extrabold text-charcoal truncate">Raw Shea Cleanser</h3>
-                <p className="text-xs font-bold text-warmgrey mt-0.5">₦12,500</p>
-              </div>
-            </div>
-
-            {/* Card 3 */}
-            <div className="w-40 flex-shrink-0 bg-white rounded-2xl p-2.5 border border-linen-border shadow-sm snap-start relative">
-              <div className="aspect-[4/5] bg-stone-100 rounded-xl relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="bg-white/90 backdrop-blur-md self-start rounded-full px-2 py-0.5 text-[9px] font-bold text-charcoal shadow-sm flex items-center gap-1">
-                  Nairobi • Bespoke
-                </div>
-              </div>
-              <div className="pt-3 pb-1">
-                <h3 className="text-xs font-extrabold text-charcoal truncate">Terracotta Linen Trench</h3>
-                <p className="text-xs font-bold text-warmgrey mt-0.5">₦145,000</p>
-              </div>
-              <div className="absolute -top-2 -right-2 bg-charcoal text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg border border-charcoal/50 flex items-center gap-1 z-20">
-                ✨ 98% Fit Score
-              </div>
-            </div>
-
-          </div>
-        </div>
-
         {/* 3. Revamped "Why AVELLIN?" Comparison */}
-        <div className="bg-white rounded-2xl border border-linen-border p-5 shadow-sm relative overflow-hidden">
+        <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-terracotta/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
           
-          <h2 className="text-[15px] font-extrabold text-charcoal mb-6 relative z-10">The Smart Marketplace Difference</h2>
+          <h2 className="text-[15px] font-extrabold text-neutral-900 mb-6 relative z-10">The Smart Marketplace Difference</h2>
           
           <div className="space-y-6 relative z-10">
             {/* Row 1 */}
-            <div className="flex gap-4 opacity-40 grayscale pb-6 border-b border-linen-border/60">
+            <div className="flex gap-4 opacity-40 grayscale pb-6 border-b border-neutral-100">
               <div className="mt-0.5 bg-stone-100 p-2.5 rounded-xl border border-stone-200 self-start">
-                <div className="w-5 h-5 border-2 border-warmgrey rounded-md"></div>
+                <div className="w-5 h-5 border-2 border-stone-400 rounded-md"></div>
               </div>
               <div className="flex-1">
-                <h3 className="text-xs font-bold text-charcoal line-through decoration-warmgrey">Standard E-Commerce</h3>
-                <p className="text-[11px] font-medium text-charcoal-secondary mt-1.5 leading-relaxed">
+                <h3 className="text-xs font-bold text-neutral-900 line-through decoration-stone-400">Standard E-Commerce</h3>
+                <p className="text-[11px] font-medium text-neutral-600 mt-1.5 leading-relaxed">
                   Standard size charts, endless return hassles, and unverified overseas dropshipping.
                 </p>
               </div>
@@ -109,7 +57,7 @@ export default function LandingPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-xs font-bold text-terracotta-dark">The Avellin Standard</h3>
-                <p className="text-[11px] font-bold text-charcoal mt-1.5 leading-relaxed">
+                <p className="text-[11px] font-bold text-neutral-900 mt-1.5 leading-relaxed">
                   3D biometric sizing calibrated to African tailoring, climate-optimized skincare, and 100% verified regional designers.
                 </p>
               </div>
@@ -118,25 +66,25 @@ export default function LandingPage() {
         </div>
 
         {/* 4. Market Trust Counters */}
-        <div className="flex flex-col gap-3">
-          <div className="bg-linen-surface rounded-xl border border-linen-border p-4 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-charcoal">4 Regional Hubs</span>
-            <span className="text-[9px] font-extrabold text-warmgrey bg-white px-2 py-1 rounded-md border border-linen-border uppercase">LOS • NBO • ACC • DKR</span>
+        <div className="flex flex-col gap-4">
+          <div className="bg-white rounded-xl border border-neutral-200 p-5 flex items-center justify-between shadow-sm">
+            <span className="text-xs font-bold text-neutral-900">4 Regional Hubs</span>
+            <span className="text-[9px] font-extrabold text-stone-500 bg-stone-50 px-2 py-1 rounded-md border border-stone-200 uppercase">LOS • NBO • ACC • DKR</span>
           </div>
-          <div className="bg-linen-surface rounded-xl border border-linen-border p-4 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-charcoal">100% Verified Ateliers</span>
+          <div className="bg-white rounded-xl border border-neutral-200 p-5 flex items-center justify-between shadow-sm">
+            <span className="text-xs font-bold text-neutral-900">100% Verified Ateliers</span>
             <span className="text-[9px] font-extrabold text-terracotta bg-terracotta/10 px-2 py-1 rounded-md border border-terracotta/20 uppercase">Guaranteed</span>
           </div>
-          <div className="bg-linen-surface rounded-xl border border-linen-border p-4 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-charcoal">Zero Sizing Guesswork</span>
-            <span className="text-[9px] font-extrabold text-charcoal bg-white px-2 py-1 rounded-md border border-linen-border uppercase">AI Calibrated</span>
+          <div className="bg-white rounded-xl border border-neutral-200 p-5 flex items-center justify-between shadow-sm">
+            <span className="text-xs font-bold text-neutral-900">Zero Sizing Guesswork</span>
+            <span className="text-[9px] font-extrabold text-neutral-900 bg-stone-50 px-2 py-1 rounded-md border border-stone-200 uppercase">AI Calibrated</span>
           </div>
         </div>
 
       </div>
 
       {/* 5. Sticky Bottom Action Bar */}
-      <div className="absolute bottom-0 w-full max-w-[420px] bg-white/95 backdrop-blur-xl border-t border-linen-border p-5 pb-8 z-50 flex flex-col gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
+      <div className="absolute bottom-0 w-full max-w-[420px] bg-white/90 backdrop-blur-md border-t border-neutral-200 p-5 pb-8 z-50 flex flex-col gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.04)]">
         <div className="flex flex-col gap-3">
           <Link 
             href="/register"
