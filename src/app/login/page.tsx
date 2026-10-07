@@ -37,7 +37,7 @@ export default function LoginPage() {
     }
     
     // Check if vendor or shopper
-    const { data: vendorData } = await supabase.from('vendors').select('id').eq('id', data.user.id).single();
+    const { data: vendorData } = await supabase.from('vendors').select('id').eq('id', data.user.id).maybeSingle();
     if (vendorData) {
       router.push('/vendor');
     } else {

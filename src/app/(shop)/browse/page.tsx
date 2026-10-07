@@ -4,6 +4,7 @@ import ProductCard from '@/components/product/ProductCard';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+import HubFilters from '@/components/shop/HubFilters';
 
 export default async function BrowseFeed() {
   const cookieStore = await cookies();
@@ -24,7 +25,7 @@ export default async function BrowseFeed() {
   const { data: { user } } = await supabase.auth.getUser();
   let needsProfileCompletion = false;
   if (user) {
-    const { data: profile } = await supabase.from('profiles').select('measurements').eq('id', user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('measurements').eq('id', user.id).maybeSingle();
     if (profile && !profile.measurements) {
       needsProfileCompletion = true;
     }
@@ -50,10 +51,7 @@ export default async function BrowseFeed() {
       {/* 1. Quick Filter Bar */}
       <div className="flex items-center gap-3 w-full">
         <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <button className="flex items-center gap-1.5 whitespace-nowrap bg-white border border-linen-pillBorder rounded-full px-3 py-1.5 shadow-sm text-[11px] font-semibold text-charcoal hover:bg-terracotta hover:text-white transition">
-            <MapPin size={12} className="opacity-70" />
-            All Hubs (Lagos, Nairobi, Dakar...)
-          </button>
+          <HubFilters />
           <button className="flex items-center gap-1.5 whitespace-nowrap bg-white border border-linen-pillBorder rounded-full px-3 py-1.5 shadow-sm text-[11px] font-semibold text-charcoal hover:bg-terracotta hover:text-white transition">
             In Stock
           </button>
