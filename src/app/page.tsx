@@ -68,10 +68,6 @@ export default function LandingPage() {
         {/* 4. Market Trust Counters */}
         <div className="flex flex-col gap-4">
           <div className="bg-white rounded-xl border border-neutral-200 p-5 flex items-center justify-between shadow-sm">
-            <span className="text-xs font-bold text-neutral-900">4 Regional Hubs</span>
-            <span className="text-[9px] font-extrabold text-stone-500 bg-stone-50 px-2 py-1 rounded-md border border-stone-200 uppercase">LOS • NBO • ACC • DKR</span>
-          </div>
-          <div className="bg-white rounded-xl border border-neutral-200 p-5 flex items-center justify-between shadow-sm">
             <span className="text-xs font-bold text-neutral-900">100% Verified Ateliers</span>
             <span className="text-[9px] font-extrabold text-terracotta bg-terracotta/10 px-2 py-1 rounded-md border border-terracotta/20 uppercase">Guaranteed</span>
           </div>
