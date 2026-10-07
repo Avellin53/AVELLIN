@@ -3,6 +3,18 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import SignOutButton from './SignOutButton';
+import BackButton from '@/components/ui/BackButton';
+import { Package, Inbox, Heart, Store, BookUser, UserCog, UserX, ChevronRight } from 'lucide-react';
+
+const MenuItem = ({ icon: Icon, label }: { icon: any, label: string }) => (
+  <div className="flex justify-between items-center px-4 py-4 border-b border-neutral-100 bg-white hover:bg-neutral-50 cursor-pointer transition">
+    <div className="flex items-center gap-3">
+      {Icon && <Icon size={20} className="text-neutral-500" />}
+      <span className="text-sm font-medium text-neutral-800">{label}</span>
+    </div>
+    <ChevronRight size={18} className="text-neutral-400" />
+  </div>
+);
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
@@ -21,28 +33,44 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  
+  const firstName = profile?.name?.split(' ')[0] || 'User';
+  const email = profile?.email || user.email;
 
   return (
-    <div className="flex flex-col h-screen px-6 pt-12 pb-24 relative max-w-[420px] mx-auto bg-linen">
-      <h1 className="text-2xl font-bold text-charcoal mb-8">Your Profile</h1>
+    <div className="relative flex flex-col min-h-screen bg-linen w-full max-w-[420px] mx-auto pb-24">
+      <BackButton />
       
-      <div className="flex flex-col items-center mb-8">
-        <div className="w-20 h-20 bg-neutral-200 text-neutral-600 rounded-full flex items-center justify-center text-3xl font-bold mb-3 shadow-sm border border-neutral-300">
-          {(profile?.name || 'U').charAt(0).toUpperCase()}
-        </div>
-        <h2 className="text-2xl font-semibold text-neutral-900">{profile?.name || 'Unknown User'}</h2>
-        <p className="text-sm text-neutral-500 mt-1">{profile?.email || user.email}</p>
+      {/* Header Section */}
+      <div className="px-4 py-6 mt-12 bg-white border-b border-neutral-100">
+        <h1 className="text-xl font-bold text-neutral-900">Welcome {firstName}!</h1>
+        <p className="text-sm text-amber-600 mt-1">{email}</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-linen-border p-5 shadow-sm mb-6 flex flex-col gap-4">
-        <div>
-          <span className="block text-[10px] font-bold text-warmgrey uppercase tracking-wider mb-0.5">Account Role</span>
-          <span className="text-sm font-semibold text-charcoal capitalize">{profile?.role || 'Shopper'}</span>
-        </div>
+      {/* My Avellin Account */}
+      <div className="mt-2 bg-white">
+        <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">My Avellin Account</h2>
+        <MenuItem icon={Package} label="Orders" />
+        <MenuItem icon={Inbox} label="Inbox" />
+        <MenuItem icon={Heart} label="Saved Items" />
+        <MenuItem icon={Store} label="Followed Ateliers" />
       </div>
 
-      <SignOutButton />
+      <div className="w-full h-2 bg-neutral-100"></div>
+
+      {/* My Settings */}
+      <div className="bg-white">
+        <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">My Settings</h2>
+        <MenuItem icon={BookUser} label="Address Book" />
+        <MenuItem icon={UserCog} label="Account Management" />
+        <MenuItem icon={UserX} label="Close Account" />
+      </div>
+
+      {/* Logout */}
+      <div className="flex justify-center mt-6 bg-white border-y border-neutral-100">
+        <SignOutButton />
+      </div>
     </div>
   );
 }

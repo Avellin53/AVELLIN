@@ -14,8 +14,11 @@ export default function SignOutButton() {
   };
 
   return (
-    <button onClick={handleSignOut} className="w-full bg-white border border-linen-border text-terracotta font-bold rounded-xl h-12 flex items-center justify-center hover:bg-terracotta/5 transition shadow-sm mt-auto">
-      Sign Out
+    <button 
+      onClick={handleSignOut} 
+      className="w-full text-center text-amber-600 font-bold text-sm uppercase py-4"
+    >
+      Logout
     </button>
   );
 }
