@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { ArrowRight, MailCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,6 +15,31 @@ function VerifyContent() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCountdown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    
+    const supabase = createClient();
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("New code sent!");
+      setCountdown(60);
+    }
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +110,20 @@ function VerifyContent() {
             {!loading && <ArrowRight size={16} />}
           </button>
         </form>
+
+        <div className="mt-8 flex flex-col gap-3 text-center items-center">
+          <button 
+            onClick={handleResend}
+            disabled={cooldown > 0}
+            className={`text-sm font-semibold transition-opacity ${cooldown > 0 ? 'text-charcoal-secondary opacity-50 cursor-not-allowed' : 'text-terracotta hover:opacity-80'}`}
+          >
+            {cooldown > 0 ? `Resend in ${cooldown}s` : "Didn't get the code? Resend"}
+          </button>
+          
+          <Link href="/register" className="text-sm text-charcoal-secondary hover:underline">
+            Wrong email? Start over
+          </Link>
+        </div>
 
       </div>
     </div>
