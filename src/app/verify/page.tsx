@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { ArrowRight, MailCheck } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
 
 function VerifyContent() {
   const searchParams = useSearchParams();
@@ -65,7 +65,7 @@ function VerifyContent() {
       return;
     }
 
-    toast.success('Email verified successfully!');
+    toast.success('Welcome to AVELLIN!');
     // Success - Redirect to home
     router.push('/home');
   };

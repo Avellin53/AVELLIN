@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, UserCheck, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -38,6 +39,7 @@ export default function LoginPage() {
     
     // Check if vendor or shopper
     const { data: vendorData } = await supabase.from('vendors').select('id').eq('id', data.user.id).maybeSingle();
+    toast.success('Welcome back to AVELLIN!');
     if (vendorData) {
       router.push('/vendor');
     } else {
