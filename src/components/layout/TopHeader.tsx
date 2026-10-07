@@ -83,7 +83,7 @@ export default function TopHeader() {
           </div>
 
           <div 
-            className={`flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 transition-opacity duration-200 ${searchFocused ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 h-auto'}`} 
+            className={`flex items-center gap-2 mt-4 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 transition-opacity duration-200 ${searchFocused ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 h-auto'}`} 
             style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
           >
             {loadingCats ? (
@@ -101,7 +101,9 @@ export default function TopHeader() {
                 </button>
               ))
             ) : (
-              <span className="text-sm text-warmgrey py-2">No categories found</span>
+              <div className="w-full flex items-center justify-center py-4">
+                <span className="text-sm text-neutral-400">No categories found</span>
+              </div>
             )}
           </div>
         </div>

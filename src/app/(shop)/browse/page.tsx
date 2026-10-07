@@ -34,7 +34,7 @@ export default async function BrowseFeed() {
   const { data: products } = await supabase.from('products').select(`*, vendor:vendors(name, isVerified)`);
   
   return (
-    <div className="px-5 pt-4 pb-8 flex flex-col space-y-6">
+    <div className="px-6 pt-4 pb-8 flex flex-col space-y-6">
       
       {/* Profile Completion Nudge */}
       {needsProfileCompletion && (
