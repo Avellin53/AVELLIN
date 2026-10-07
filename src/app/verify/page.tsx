@@ -80,7 +80,7 @@ function VerifyContent() {
           </div>
           <h1 className="text-2xl font-bold text-charcoal">Verify Your Email</h1>
           <p className="text-sm text-charcoal-secondary mt-2">
-            Enter the 6-digit code sent to <br/>
+            Enter the 8-digit code sent to <br/>
             <span className="font-bold text-charcoal">{email || 'your email address'}</span>
           </p>
         </div>
@@ -93,17 +93,17 @@ function VerifyContent() {
             <input 
               type="text" 
               required 
-              maxLength={6}
+              maxLength={8}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
-              placeholder="000000"
-              className="w-full h-14 bg-linen-surface border border-linen-border rounded-xl px-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-terracotta transition"
+              placeholder="00000000"
+              className="w-full h-14 bg-linen-surface border border-linen-border rounded-xl px-4 text-center text-2xl tracking-[0.3em] font-mono focus:outline-none focus:border-terracotta transition"
             />
           </div>
           
           <button 
             type="submit" 
-            disabled={loading || code.length < 6}
+            disabled={loading || code.length < 8}
             className="w-full h-12 bg-terracotta text-white rounded-xl font-bold text-sm shadow-md hover:bg-terracotta-dark transition flex justify-center items-center gap-2 disabled:opacity-50"
           >
             {loading ? 'Verifying...' : 'Verify Email'}
