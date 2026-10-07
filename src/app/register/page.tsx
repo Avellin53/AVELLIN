@@ -35,7 +35,7 @@ export default function RegisterPage() {
     const timer = setTimeout(async () => {
       setNameStatus('checking');
       const supabase = createClient();
-      const { data } = await supabase.from('profiles').select('id').eq('full_name', formData.fullName).single();
+      const { data } = await supabase.from('profiles').select('id').eq('name', formData.fullName).maybeSingle();
       setNameStatus(data ? 'unavailable' : 'available');
     }, 500);
     return () => clearTimeout(timer);
@@ -49,7 +49,7 @@ export default function RegisterPage() {
     const timer = setTimeout(async () => {
       setEmailStatus('checking');
       const supabase = createClient();
-      const { data } = await supabase.from('profiles').select('id').eq('email', formData.email).single();
+      const { data } = await supabase.from('profiles').select('id').eq('email', formData.email).maybeSingle();
       setEmailStatus(data ? 'unavailable' : 'available');
     }, 500);
     return () => clearTimeout(timer);
@@ -91,7 +91,7 @@ export default function RegisterPage() {
       await supabase.from('profiles').insert({
         id: authData.user.id,
         email: formData.email,
-        full_name: formData.fullName,
+        name: formData.fullName,
         measurements: {
           height: formData.height,
           bust: formData.bust,
