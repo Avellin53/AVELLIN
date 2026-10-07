@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Camera } from 'lucide-react';
+import { Bell, Search, Camera, ShoppingCart } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export default function TopHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -59,9 +60,15 @@ export default function TopHeader() {
                 AI STUDIO
               </span>
             </div>
-            <button onClick={handleNotification} aria-label="Notifications" className="relative p-2 rounded-full hover:bg-black/5 transition">
-              <Bell size={20} className="text-charcoal" />
-            </button>
+            <div className="flex items-center gap-1">
+              <Link href="/cart" className="relative p-2 rounded-full hover:bg-black/5 transition">
+                <ShoppingCart size={20} className="text-charcoal" />
+                <div className="absolute top-1 right-1 w-2 h-2 bg-terracotta rounded-full border border-white"></div>
+              </Link>
+              <button onClick={handleNotification} aria-label="Notifications" className="relative p-2 rounded-full hover:bg-black/5 transition">
+                <Bell size={20} className="text-charcoal" />
+              </button>
+            </div>
           </div>
 
           {/* Search Row */}
@@ -82,30 +89,32 @@ export default function TopHeader() {
             </button>
           </div>
 
-          <div 
-            className={`flex items-center gap-2 mt-4 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 transition-opacity duration-200 ${searchFocused ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 h-auto'}`} 
-            style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
-          >
-            {loadingCats ? (
-              Array(4).fill(0).map((_, i) => (
-                <div key={i} className="h-9 w-24 bg-linen-surface border border-linen-border rounded-full animate-pulse flex-shrink-0" />
-              ))
-            ) : categories.length > 0 ? (
-              categories.map((category) => (
-                <button 
-                  key={category} 
-                  onClick={() => setActiveCategory(category)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm border ${activeCategory === category ? 'bg-terracotta text-white border-terracotta' : 'bg-white border-linen-border text-charcoal hover:bg-linen-surface'}`}
-                >
-                  {category}
-                </button>
-              ))
-            ) : (
-              <div className="w-full flex items-center justify-center py-4">
-                <span className="text-sm text-neutral-400">No categories found</span>
-              </div>
-            )}
-          </div>
+          {!loadingCats && categories.length === 0 ? (
+            <div className="w-full flex items-center justify-center py-4 mt-4">
+              <span className="text-sm text-neutral-400">No categories found</span>
+            </div>
+          ) : (
+            <div 
+              className={`flex items-center gap-2 mt-4 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 transition-opacity duration-200 ${searchFocused ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 h-auto'}`} 
+              style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
+            >
+              {loadingCats ? (
+                Array(4).fill(0).map((_, i) => (
+                  <div key={i} className="h-9 w-24 bg-linen-surface border border-linen-border rounded-full animate-pulse flex-shrink-0" />
+                ))
+              ) : (
+                categories.map((category) => (
+                  <button 
+                    key={category} 
+                    onClick={() => setActiveCategory(category)}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm border ${activeCategory === category ? 'bg-terracotta text-white border-terracotta' : 'bg-white border-linen-border text-charcoal hover:bg-linen-surface'}`}
+                  >
+                    {category}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </header>
     </>
