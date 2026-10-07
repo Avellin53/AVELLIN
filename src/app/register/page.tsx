@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
@@ -23,7 +23,37 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [nameStatus, setNameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
   const router = useRouter();
+
+  useEffect(() => {
+    if (!formData.fullName) {
+      setNameStatus('idle');
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setNameStatus('checking');
+      const supabase = createClient();
+      const { data } = await supabase.from('profiles').select('id').eq('full_name', formData.fullName).single();
+      setNameStatus(data ? 'unavailable' : 'available');
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [formData.fullName]);
+
+  useEffect(() => {
+    if (!formData.email) {
+      setEmailStatus('idle');
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setEmailStatus('checking');
+      const supabase = createClient();
+      const { data } = await supabase.from('profiles').select('id').eq('email', formData.email).single();
+      setEmailStatus(data ? 'unavailable' : 'available');
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [formData.email]);
 
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
@@ -60,6 +90,7 @@ export default function RegisterPage() {
     if (formData.role === 'shopper') {
       await supabase.from('profiles').insert({
         id: authData.user.id,
+        email: formData.email,
         full_name: formData.fullName,
         measurements: {
           height: formData.height,
@@ -73,6 +104,7 @@ export default function RegisterPage() {
     } else {
       await supabase.from('vendors').insert({
         id: authData.user.id,
+        email: formData.email,
         name: formData.fullName,
         location: 'Africa',
       });
@@ -108,11 +140,15 @@ export default function RegisterPage() {
             <div className="space-y-4 fade-in">
               <div>
                 <label className="block text-xs font-bold text-charcoal mb-1">Full Name</label>
-                <input type="text" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full h-12 bg-linen-surface border border-linen-border rounded-xl px-4 text-sm focus:border-terracotta outline-none" />
+                <input type="text" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} className={`w-full h-12 bg-linen-surface border rounded-xl px-4 text-sm outline-none transition ${nameStatus === 'unavailable' ? 'border-red-500 focus:border-red-500' : 'border-linen-border focus:border-terracotta'}`} />
+                {nameStatus === 'available' && <p className="text-green-600 text-xs mt-1">✓ Name available</p>}
+                {nameStatus === 'unavailable' && <p className="text-red-500 text-xs mt-1">✗ Name already in use</p>}
               </div>
               <div>
                 <label className="block text-xs font-bold text-charcoal mb-1">Email</label>
-                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full h-12 bg-linen-surface border border-linen-border rounded-xl px-4 text-sm focus:border-terracotta outline-none" />
+                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className={`w-full h-12 bg-linen-surface border rounded-xl px-4 text-sm outline-none transition ${emailStatus === 'unavailable' ? 'border-red-500 focus:border-red-500' : 'border-linen-border focus:border-terracotta'}`} />
+                {emailStatus === 'available' && <p className="text-green-600 text-xs mt-1">✓ Email available</p>}
+                {emailStatus === 'unavailable' && <p className="text-red-500 text-xs mt-1">✗ Email already in use</p>}
               </div>
               <div>
                 <label className="block text-xs font-bold text-charcoal mb-1">Password</label>
@@ -127,7 +163,7 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
-              <button onClick={handleNext} disabled={!formData.email || !formData.password || !formData.fullName} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">Next <ArrowRight size={16} /></button>
+              <button onClick={handleNext} disabled={!formData.email || !formData.password || !formData.fullName || nameStatus !== 'available' || emailStatus !== 'available'} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition">Next <ArrowRight size={16} /></button>
             </div>
           )}
 

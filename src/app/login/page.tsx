@@ -9,7 +9,7 @@ import Link from 'next/link';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | React.ReactNode>('');
+  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
@@ -28,14 +28,7 @@ export default function LoginPage() {
     
     if (error) {
       if (error.message.includes('Email not confirmed')) {
-        setError(
-          <span>
-            Email not verified.{' '}
-            <Link href={`/verify?email=${encodeURIComponent(email)}`} className="underline font-bold text-terracotta">
-              Click here to enter your verification code
-            </Link>
-          </span>
-        );
+        setError('unverified');
       } else {
         setError(error.message);
       }
@@ -58,7 +51,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-charcoal mb-2">Welcome Back</h1>
         <p className="text-sm text-charcoal-secondary mb-6">Log in to your Avellin account</p>
         
-        {error && <div className="bg-terracotta/10 text-terracotta text-sm p-3 rounded-xl mb-4">{error}</div>}
+        {error && error !== 'unverified' && <div className="bg-terracotta/10 text-terracotta text-sm p-3 rounded-xl mb-4">{error}</div>}
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -100,6 +93,18 @@ export default function LoginPage() {
             {!loading && <ArrowRight size={16} />}
           </button>
         </form>
+        
+        {error === 'unverified' && (
+          <div className="mt-4 text-center p-4 bg-red-50 rounded-xl border border-red-100">
+            <p className="text-red-600 font-bold text-sm mb-3">Your email is not verified.</p>
+            <Link 
+              href={`/verify?email=${encodeURIComponent(email)}`}
+              className="w-full h-10 bg-white text-red-600 border border-red-200 rounded-lg font-bold text-xs flex justify-center items-center hover:bg-red-50 transition shadow-sm"
+            >
+              Click here to enter your verification code
+            </Link>
+          </div>
+        )}
         
         <div className="mt-6 text-center">
           <p className="text-xs text-charcoal-secondary">
