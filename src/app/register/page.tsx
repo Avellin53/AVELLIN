@@ -13,12 +13,18 @@ export default function RegisterPage() {
     password: '',
     fullName: '',
     role: 'shopper',
+    // Shopper fields
+    gender: 'Female',
+    standardSize: 'M',
     height: 170,
-    bust: 90,
-    waist: 70,
-    hips: 95,
-    skinType: 'Combination',
-    climate: 'Tropical',
+    stylePreferences: [] as string[],
+    // Vendor fields
+    brandName: '',
+    brandDescription: '',
+    hubLocation: 'Lagos',
+    businessEmail: '',
+    phoneNumber: '',
+    portfolioLink: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,6 +64,16 @@ export default function RegisterPage() {
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
 
+  const toggleStyle = (style: string) => {
+    setFormData(prev => {
+      if (prev.stylePreferences.includes(style)) {
+        return { ...prev, stylePreferences: prev.stylePreferences.filter(s => s !== style) };
+      } else {
+        return { ...prev, stylePreferences: [...prev.stylePreferences, style] };
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     setError('');
     setLoading(true);
@@ -86,27 +102,35 @@ export default function RegisterPage() {
       return;
     }
 
-    // 2. Save profile data
-    if (formData.role === 'shopper') {
-      await supabase.from('profiles').insert({
-        id: authData.user.id,
-        email: formData.email,
-        name: formData.fullName,
-        measurements: {
-          height: formData.height,
-          bust: formData.bust,
-          waist: formData.waist,
-          hips: formData.hips,
-        },
-        skin_type: formData.skinType,
-        climate: formData.climate,
-      });
-    } else {
+    // 2. Save profile data to profiles (both shopper and vendor info)
+    await supabase.from('profiles').insert({
+      id: authData.user.id,
+      email: formData.email,
+      name: formData.fullName,
+      role: formData.role,
+      measurements: formData.role === 'shopper' ? {
+        gender: formData.gender,
+        standard_size: formData.standardSize,
+        height: formData.height,
+      } : null,
+      style_preferences: formData.role === 'shopper' ? formData.stylePreferences : null,
+      vendor_details: formData.role === 'vendor' ? {
+        brand_name: formData.brandName,
+        brand_description: formData.brandDescription,
+        hub_location: formData.hubLocation,
+        business_email: formData.businessEmail,
+        phone_number: formData.phoneNumber,
+        portfolio_link: formData.portfolioLink,
+      } : null,
+    });
+
+    // If vendor, also populate the vendors table for the dashboard
+    if (formData.role === 'vendor') {
       await supabase.from('vendors').insert({
         id: authData.user.id,
         email: formData.email,
-        name: formData.fullName,
-        location: 'Africa',
+        name: formData.brandName || formData.fullName,
+        location: formData.hubLocation,
       });
     }
 
@@ -169,53 +193,123 @@ export default function RegisterPage() {
 
           {step === 2 && (
             <div className="space-y-3 fade-in">
-              <button onClick={() => setFormData({...formData, role: 'shopper'})} className={`w-full p-4 rounded-xl border text-left ${formData.role === 'shopper' ? 'border-terracotta bg-terracotta/5' : 'border-linen-border bg-white'}`}>
+              <button onClick={() => setFormData({...formData, role: 'shopper'})} className={`w-full p-4 rounded-xl border text-left transition ${formData.role === 'shopper' ? 'border-terracotta bg-terracotta/5' : 'border-linen-border bg-white hover:border-terracotta/50'}`}>
                 <h3 className="font-bold text-charcoal">Shopper</h3>
-                <p className="text-xs text-charcoal-secondary">Find my perfect fit using AI</p>
+                <p className="text-xs text-charcoal-secondary mt-1">Find your perfect fit with our AI recommendations</p>
               </button>
-              <button onClick={() => setFormData({...formData, role: 'vendor'})} className={`w-full p-4 rounded-xl border text-left ${formData.role === 'vendor' ? 'border-terracotta bg-terracotta/5' : 'border-linen-border bg-white'}`}>
+              <button onClick={() => setFormData({...formData, role: 'vendor'})} className={`w-full p-4 rounded-xl border text-left transition ${formData.role === 'vendor' ? 'border-terracotta bg-terracotta/5' : 'border-linen-border bg-white hover:border-terracotta/50'}`}>
                 <h3 className="font-bold text-charcoal">Vendor</h3>
-                <p className="text-xs text-charcoal-secondary">Sell my brand on Avellin</p>
+                <p className="text-xs text-charcoal-secondary mt-1">Sell your African fashion brand or beauty line on Avellin</p>
               </button>
-              <button onClick={handleNext} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2">Next <ArrowRight size={16} /></button>
+              <button onClick={handleNext} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 transition hover:bg-black">Next <ArrowRight size={16} /></button>
             </div>
           )}
 
-          {step === 3 && (
+          {step === 3 && formData.role === 'shopper' && (
             <div className="space-y-4 fade-in">
-              <p className="text-xs text-center text-charcoal-secondary mb-4">Set up your biometric profile to get accurate size recommendations.</p>
-              {['height', 'bust', 'waist', 'hips'].map((measurement) => (
-                <div key={measurement}>
-                  <div className="flex justify-between">
-                    <label className="block text-xs font-bold text-charcoal capitalize">{measurement} (cm)</label>
-                    <span className="text-xs font-bold text-terracotta">{formData[measurement as keyof typeof formData]}</span>
-                  </div>
-                  <input type="range" min="50" max="250" value={formData[measurement as keyof typeof formData] as number} onChange={e => setFormData({...formData, [measurement]: parseInt(e.target.value)})} className="w-full accent-terracotta" />
-                </div>
-              ))}
-              <button onClick={handleNext} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2">Next <ArrowRight size={16} /></button>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-4 fade-in">
+              <div className="text-center mb-2">
+                <h2 className="font-bold text-charcoal text-lg">Fit Profile</h2>
+                <p className="text-xs text-charcoal-secondary mt-1">Help our AI match you perfectly.</p>
+              </div>
               <div>
-                <label className="block text-xs font-bold text-charcoal mb-2">Skin Type</label>
+                <label className="block text-xs font-bold text-charcoal mb-2">Gender</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['Dry', 'Oily', 'Combination', 'Sensitive'].map(t => (
-                    <button key={t} onClick={() => setFormData({...formData, skinType: t})} className={`py-2 px-3 text-xs rounded-xl border ${formData.skinType === t ? 'border-terracotta bg-terracotta text-white' : 'border-linen-border text-charcoal'}`}>{t}</button>
+                  {['Female', 'Male', 'Non-binary', 'Prefer not to say'].map(g => (
+                    <button key={g} onClick={() => setFormData({...formData, gender: g})} className={`py-2 px-3 text-xs rounded-xl border transition ${formData.gender === g ? 'border-terracotta bg-terracotta text-white font-bold' : 'border-linen-border text-charcoal bg-linen-surface hover:border-warmgrey'}`}>{g}</button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-charcoal mb-2">Climate Environment</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['Tropical', 'Dry/Arid', 'Temperate', 'Humid'].map(t => (
-                    <button key={t} onClick={() => setFormData({...formData, climate: t})} className={`py-2 px-3 text-xs rounded-xl border ${formData.climate === t ? 'border-terracotta bg-terracotta text-white' : 'border-linen-border text-charcoal'}`}>{t}</button>
+                <label className="block text-xs font-bold text-charcoal mb-2">Standard Clothing Size</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(s => (
+                    <button key={s} onClick={() => setFormData({...formData, standardSize: s})} className={`py-2 text-xs rounded-xl border transition ${formData.standardSize === s ? 'border-terracotta bg-terracotta text-white font-bold' : 'border-linen-border text-charcoal bg-linen-surface hover:border-warmgrey'}`}>{s}</button>
                   ))}
                 </div>
               </div>
-              <button onClick={handleNext} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2">Next <ArrowRight size={16} /></button>
+              <div>
+                <div className="flex justify-between mb-2">
+                  <label className="block text-xs font-bold text-charcoal">Height (cm)</label>
+                  <span className="text-xs font-bold text-terracotta">{formData.height} cm</span>
+                </div>
+                <input type="range" min="140" max="220" value={formData.height} onChange={e => setFormData({...formData, height: parseInt(e.target.value)})} className="w-full accent-terracotta" />
+              </div>
+              <button onClick={handleNext} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 transition hover:bg-black">Next <ArrowRight size={16} /></button>
+            </div>
+          )}
+
+          {step === 4 && formData.role === 'shopper' && (
+            <div className="space-y-4 fade-in">
+              <div className="text-center mb-2">
+                <h2 className="font-bold text-charcoal text-lg">Style Preferences</h2>
+                <p className="text-xs text-charcoal-secondary mt-1">Select all that apply.</p>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center py-2">
+                {['Streetwear', 'Traditional', 'Minimalist', 'Clean Beauty', 'Luxury', 'Casual', 'Formal', 'Vintage', 'Avant-Garde'].map(style => {
+                  const selected = formData.stylePreferences.includes(style);
+                  return (
+                    <button 
+                      key={style} 
+                      onClick={() => toggleStyle(style)} 
+                      className={`py-2 px-4 text-xs rounded-full border transition ${selected ? 'border-terracotta bg-terracotta text-white font-bold shadow-sm' : 'border-linen-border text-charcoal bg-white hover:border-warmgrey'}`}
+                    >
+                      {style}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={handleNext} disabled={formData.stylePreferences.length === 0} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition hover:bg-black">Next <ArrowRight size={16} /></button>
+            </div>
+          )}
+
+          {step === 3 && formData.role === 'vendor' && (
+            <div className="space-y-4 fade-in">
+              <div className="text-center mb-2">
+                <h2 className="font-bold text-charcoal text-lg">Brand Details</h2>
+                <p className="text-xs text-charcoal-secondary mt-1">Tell us about your atelier or label.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-charcoal mb-1">Brand Name</label>
+                <input type="text" value={formData.brandName} onChange={e => setFormData({...formData, brandName: e.target.value})} placeholder="E.g., Ozwald Studio" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-charcoal mb-1">Hub Location</label>
+                <select value={formData.hubLocation} onChange={e => setFormData({...formData, hubLocation: e.target.value})} className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition appearance-none">
+                  <option value="Lagos">Lagos</option>
+                  <option value="Nairobi">Nairobi</option>
+                  <option value="Dakar">Dakar</option>
+                  <option value="Accra">Accra</option>
+                  <option value="Cape Town">Cape Town</option>
+                  <option value="Johannesburg">Johannesburg</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-charcoal mb-1">Short Description</label>
+                <textarea value={formData.brandDescription} onChange={e => setFormData({...formData, brandDescription: e.target.value})} rows={2} placeholder="What makes your brand unique?" className="w-full bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl p-3 text-sm outline-none transition resize-none"></textarea>
+              </div>
+              <button onClick={handleNext} disabled={!formData.brandName} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition hover:bg-black">Next <ArrowRight size={16} /></button>
+            </div>
+          )}
+
+          {step === 4 && formData.role === 'vendor' && (
+            <div className="space-y-4 fade-in">
+              <div className="text-center mb-2">
+                <h2 className="font-bold text-charcoal text-lg">Verification</h2>
+                <p className="text-xs text-charcoal-secondary mt-1">Secure your vendor application.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-charcoal mb-1">Business Email</label>
+                <input type="email" value={formData.businessEmail} onChange={e => setFormData({...formData, businessEmail: e.target.value})} placeholder="hello@brand.com" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-charcoal mb-1">Phone Number</label>
+                <input type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+234..." className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-charcoal mb-1">Portfolio / Social Link</label>
+                <input type="url" value={formData.portfolioLink} onChange={e => setFormData({...formData, portfolioLink: e.target.value})} placeholder="instagram.com/yourbrand" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
+              </div>
+              <button onClick={handleNext} disabled={!formData.businessEmail || !formData.phoneNumber || !formData.portfolioLink} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition hover:bg-black">Next <ArrowRight size={16} /></button>
             </div>
           )}
 
@@ -225,9 +319,11 @@ export default function RegisterPage() {
                 <Sparkles size={24} />
               </div>
               <h2 className="text-xl font-bold text-charcoal">Profile Complete!</h2>
-              <p className="text-sm text-charcoal-secondary">We have generated your Avellin AI profile.</p>
+              <p className="text-sm text-charcoal-secondary">
+                {formData.role === 'shopper' ? 'We have generated your Avellin AI profile.' : 'Your vendor application is ready.'}
+              </p>
               
-              <button onClick={handleSubmit} disabled={loading} className="w-full h-12 bg-terracotta text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+              <button onClick={handleSubmit} disabled={loading} className="w-full h-12 bg-terracotta text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-terracotta-dark transition shadow-md">
                 {loading ? 'Saving...' : 'Finish & Verify Email'} <ArrowRight size={16} />
               </button>
             </div>
