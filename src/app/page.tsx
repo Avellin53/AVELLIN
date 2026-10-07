@@ -13,7 +13,7 @@ export default function LandingPage() {
         {/* 1. Header & Brand Identity */}
         <div className="flex flex-col items-center text-center space-y-5 mt-4">
           <div className="bg-ochre/10 text-ochre border border-ochre/20 text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-            <span>✨</span> Curated African Fashion & Clean Beauty
+            <span>✨</span> African Fashion & Beauty
           </div>
           
           <div className="space-y-3">
@@ -21,12 +21,12 @@ export default function LandingPage() {
               AVELLIN
             </h1>
             <h2 className="text-xl font-extrabold text-charcoal leading-snug px-2">
-              African Luxury, Cut to Your Exact Silhouette.
+              Find Your Perfect Fit.
             </h2>
           </div>
           
           <p className="text-[13px] font-medium text-charcoal-secondary leading-relaxed px-4">
-            Shop curated pieces from verified ateliers across Lagos, Nairobi, Accra, and Dakar — precision-matched to your biometrics.
+            Shop verified African designers. Our AI matches you with clothes that fit your exact body measurements.
           </p>
         </div>
 
