@@ -20,8 +20,11 @@ export async function POST(request: Request) {
     console.error("❌ CRITICAL: Missing Environment Variables!");
   }
 
+  let fallbackChatId: number | null = null;
+
   try {
     const body = await request.json();
+    fallbackChatId = body?.message?.chat?.id || null;
     console.log("📥 Incoming Telegram Payload:", JSON.stringify(body, null, 2));
 
     // 1. Check if this is a Telegram Update object
@@ -110,7 +113,7 @@ export async function POST(request: Request) {
         const imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff"; 
 
         // 4. Insert into Products Table
-        const { error } = await supabaseAdmin.from('products').insert([
+        const { error: insertError } = await supabaseAdmin.from('products').insert([
           {
             title,
             price,
@@ -122,7 +125,11 @@ export async function POST(request: Request) {
           }
         ]);
 
-        if (error) throw error;
+        if (insertError) {
+          console.error("DB Insert Error:", insertError);
+          await sendMessage(chatId, `⚠️ Database Insert Failed: ${insertError.message}\nHint: Check your column names (title vs name, image_url vs image).`);
+          return NextResponse.json({ success: true }); // Return 200 to prevent retries
+        }
 
         await sendMessage(chatId, `🎉 Success! **${title}** has been published live to AVELLIN.\nShoppers can now see this item.`);
         return NextResponse.json({ success: true });
@@ -190,8 +197,15 @@ export async function POST(request: Request) {
     );
 
   } catch (error: any) {
-    console.error("❌ Webhook Error:", error.message || error);
-    // Always return 200 to Telegram so it doesn't get stuck in a retry loop
-    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 200 });
+    console.error("❌ Webhook Error:", error);
+    // Attempt to notify the user if chatId is available
+    if (fallbackChatId) {
+      try {
+        await sendMessage(fallbackChatId, `⚠️ Fatal Server Crash: ${error.message || "Unknown error"}`);
+      } catch (e) {
+         // Ignore nested errors
+      }
+    }
+    return NextResponse.json({ success: false }, { status: 200 });
   }
 }
