@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -14,7 +15,7 @@ export default async function VendorDashboard() {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
-  
+
   const { data: profile } = await supabase.from('profiles').select('role, first_name').eq('id', user.id).maybeSingle();
   if (profile?.role !== 'vendor') redirect('/home');
 

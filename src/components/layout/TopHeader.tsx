@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Bell, Search, Camera, ShoppingCart, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, Search, Camera, ShoppingCart, ChevronLeft, Sparkles } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import ProductCard from '@/components/product/ProductCard';
 
 export default function TopHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -13,6 +14,10 @@ export default function TopHeader() {
   const [activeCategory, setActiveCategory] = useState('Fashion');
   const [categories, setCategories] = useState<string[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lensResults, setLensResults] = useState<any[] | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const pathname = usePathname();
   const router = useRouter();
@@ -47,6 +52,19 @@ export default function TopHeader() {
     toast('No new notifications', {
       description: 'You are all caught up!',
     });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setIsAnalyzing(true);
+      setLensResults(null);
+      setTimeout(async () => {
+        const supabase = createClient();
+        const { data } = await supabase.from('products').select('*, vendor:vendors(name, isVerified)').limit(4);
+        setLensResults(data || []);
+        setIsAnalyzing(false);
+      }, 3000);
+    }
   };
 
   return (
@@ -91,13 +109,38 @@ export default function TopHeader() {
               onBlur={() => setSearchFocused(false)}
               className="w-full bg-white border border-linen-border rounded-2xl py-3 pl-10 pr-[88px] text-sm focus:outline-none focus:ring-2 focus:ring-terracotta shadow-sm placeholder:text-warmgrey relative z-50"
             />
-            <button className="absolute right-2 flex items-center gap-1 bg-linen px-3 py-1.5 rounded-xl hover:bg-linen-surface transition border border-linen-border z-50">
+            <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+            <button onClick={() => fileInputRef.current?.click()} className="absolute right-2 flex items-center gap-1 bg-linen px-3 py-1.5 rounded-xl hover:bg-linen-surface transition border border-linen-border z-50">
               <Camera size={14} className="text-ochre" />
               <span className="text-xs font-semibold text-charcoal">+ Lens</span>
             </button>
           </div>
 
-          {!loadingCats && categories.length === 0 ? (
+          {/* Lens Results UI */}
+          {isAnalyzing && (
+            <div className="flex flex-col items-center justify-center py-10 mt-4 bg-white rounded-2xl shadow-sm border border-linen-border">
+              <Sparkles size={32} className="text-terracotta animate-pulse mb-3" />
+              <p className="text-sm font-bold text-charcoal">Analyzing image for related styles...</p>
+            </div>
+          )}
+
+          {!isAnalyzing && lensResults && (
+            <div className="mt-6 bg-white rounded-2xl shadow-sm border border-linen-border p-4 max-h-[60vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4 px-2">
+                <p className="text-sm font-medium text-emerald-600">Successfully found {lensResults.length} products related to your search.</p>
+                <button onClick={() => setLensResults(null)} className="flex-shrink-0 text-xs font-bold text-neutral-500 hover:text-charcoal underline">
+                  Clear Search
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {lensResults.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!isAnalyzing && !lensResults && !loadingCats && categories.length === 0 ? (
             <div className="w-full flex items-center justify-center py-4 mt-4">
               <span className="text-sm text-neutral-400">No categories found</span>
             </div>

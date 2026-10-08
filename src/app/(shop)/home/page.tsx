@@ -2,6 +2,8 @@ import React from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import ProductCard from '@/components/product/ProductCard';
+import { Sparkles } from 'lucide-react';
 
 export default async function HomePage() {
   const cookieStore = await cookies();
@@ -17,10 +19,24 @@ export default async function HomePage() {
     if (profile?.role === 'vendor') redirect('/vendor/dashboard');
   }
 
+  const { data: products } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] items-center justify-center text-center px-4">
-      <h1 className="text-xl font-bold text-charcoal mb-2">Your Feed</h1>
-      <p className="text-sm text-neutral-500">Personalized recommendations will appear here.</p>
+    <div className="px-6 pt-4 pb-8 flex flex-col space-y-6">
+      <h1 className="text-xl font-bold text-neutral-900">Your AI Feed</h1>
+      {products && products.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {products.map((product: any) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <div className="py-16 text-center flex flex-col items-center">
+          <Sparkles size={32} className="text-neutral-300 mb-4 opacity-50" />
+          <h3 className="font-bold text-neutral-900">New collections dropping soon</h3>
+          <p className="text-xs text-neutral-500 mt-1 max-w-[200px]">Check back later for exclusive drops from African designers.</p>
+        </div>
+      )}
     </div>
   );
 }

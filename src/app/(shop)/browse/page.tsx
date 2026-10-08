@@ -33,7 +33,7 @@ export default async function BrowseFeed() {
     }
   }
 
-  const { data: products } = await supabase.from('products').select(`*, vendor:vendors(name, isVerified)`);
+  const { data: products } = await supabase.from('products').select(`*, vendor:vendors(name, isVerified)`).order('created_at', { ascending: false });
   
   return (
     <div className="px-6 pt-4 pb-8 flex flex-col space-y-6">
