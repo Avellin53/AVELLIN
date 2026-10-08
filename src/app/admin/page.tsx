@@ -3,7 +3,8 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { Users, LayoutDashboard, ShieldCheck, Activity, LogOut } from 'lucide-react'
+import { Users, LayoutDashboard, ShieldCheck, Activity, LogOut, Trash2, PackageSearch } from 'lucide-react'
+import Image from 'next/image'
 
 import VendorCreationModal from './VendorCreationModal'
 
@@ -39,6 +40,23 @@ export default async function AdminPage() {
   )
 
   // Fetch metrics
+  // Auto-Sync Ghost Shoppers
+  const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
+  const authUsers = authData?.users || [];
+  const { data: profileData } = await supabaseAdmin.from('profiles').select('id');
+  const profileIds = (profileData || []).map((p: any) => p.id);
+
+  const missingProfiles = authUsers.filter(u => !profileIds.includes(u.id)).map(u => ({
+    id: u.id,
+    email: u.email,
+    name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Shopper',
+    role: 'shopper',
+    created_at: u.created_at
+  }));
+  
+  if (missingProfiles.length > 0) {
+    await supabaseAdmin.from('profiles').insert(missingProfiles);
+  }
   const { count: shopperCount } = await supabaseAdmin
     .from('profiles')
     .select('*', { count: 'exact', head: true })
@@ -58,6 +76,11 @@ export default async function AdminPage() {
     .select('id, name, email, role, created_at')
     .order('created_at', { ascending: false });
 
+  const { data: productsList } = await supabaseAdmin
+    .from('products')
+    .select('*, profiles(name)')
+    .order('created_at', { ascending: false });
+
   // Server Actions
   async function toggleRole(userId: string, currentRole: string) {
     'use server'
@@ -68,6 +91,14 @@ export default async function AdminPage() {
     const newRole = currentRole === 'shopper' ? 'vendor' : 'shopper';
     await adminDb.from('profiles').update({ role: newRole }).eq('id', userId);
     
+    revalidatePath('/admin')
+  }
+
+  async function deleteProduct(productId: string) {
+    'use server'
+    const { createClient } = await import('@supabase/supabase-js')
+    const adminDb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    await adminDb.from('products').delete().eq('id', productId);
     revalidatePath('/admin')
   }
 
@@ -202,6 +233,77 @@ export default async function AdminPage() {
                     <div className="flex flex-col items-center justify-center opacity-50">
                       <Users size={32} className="mb-3" />
                       <p>No users found in the system.</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="bg-white rounded-3xl border border-neutral-200 shadow-sm overflow-hidden mt-8">
+        <div className="px-6 py-5 border-b border-neutral-200 bg-neutral-50/50">
+          <h2 className="text-lg font-bold text-neutral-900">Live Products Management</h2>
+          <p className="text-xs text-neutral-500 mt-1">Review and manage published products</p>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-neutral-100 text-xs uppercase tracking-wider text-neutral-400 font-bold bg-white">
+                <th className="px-6 py-4 font-bold">Product</th>
+                <th className="px-6 py-4 font-bold">Price</th>
+                <th className="px-6 py-4 font-bold">Vendor</th>
+                <th className="px-6 py-4 font-bold">Date Published</th>
+                <th className="px-6 py-4 font-bold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {productsList?.map((p: any) => (
+                <tr key={p.id} className="hover:bg-neutral-50/80 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-neutral-100">
+                        {p.image_url ? (
+                          <Image src={p.image_url} alt={p.title} fill className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <PackageSearch size={16} className="text-neutral-400" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-neutral-900 line-clamp-1">{p.title}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-medium text-neutral-900">₦{p.price.toLocaleString()}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-neutral-600 font-medium">{p.profiles?.name || 'Unknown'}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-neutral-600">
+                      {new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <form action={deleteProduct.bind(null, p.id)}>
+                      <button 
+                        className="text-neutral-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition-colors"
+                        title="Delete Product"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+              {(!productsList || productsList.length === 0) && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-16 text-center text-sm text-neutral-500">
+                    <div className="flex flex-col items-center justify-center opacity-50">
+                      <PackageSearch size={32} className="mb-3" />
+                      <p>No products currently live.</p>
                     </div>
                   </td>
                 </tr>
