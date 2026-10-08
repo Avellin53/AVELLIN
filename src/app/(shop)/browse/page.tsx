@@ -68,7 +68,7 @@ export default async function BrowseFeed() {
 
       {/* 2. The 2-Column Product Grid */}
       {products && products.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
           {products.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}

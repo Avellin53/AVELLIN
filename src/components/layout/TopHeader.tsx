@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Search, Camera, ShoppingCart, ChevronLeft, Sparkles } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
+import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import ProductCard from '@/components/product/ProductCard';
@@ -14,6 +15,13 @@ export default function TopHeader() {
   const [activeCategory, setActiveCategory] = useState('Fashion');
   const [categories, setCategories] = useState<string[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
+  
+  const [mounted, setMounted] = useState(false);
+  const cartCount = useCartStore((state) => state.cartCount());
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lensResults, setLensResults] = useState<any[] | null>(null);
@@ -89,7 +97,13 @@ export default function TopHeader() {
             <div className="flex items-center gap-1">
               <Link href="/cart" className="relative p-2 rounded-full hover:bg-black/5 transition">
                 <ShoppingCart size={20} className="text-charcoal" />
-                <div className="absolute top-1 right-1 w-2 h-2 bg-terracotta rounded-full border border-white"></div>
+                {mounted && cartCount > 0 ? (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                    {cartCount}
+                  </span>
+                ) : (
+                  <div className="absolute top-1 right-1 w-2 h-2 bg-terracotta rounded-full border border-white"></div>
+                )}
               </Link>
               <button onClick={handleNotification} aria-label="Notifications" className="relative p-2 rounded-full hover:bg-black/5 transition">
                 <Bell size={20} className="text-charcoal" />
