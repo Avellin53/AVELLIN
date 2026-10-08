@@ -8,6 +8,7 @@ import { Users, LayoutDashboard, ShieldCheck, Activity, LogOut } from 'lucide-re
 import VendorCreationModal from './VendorCreationModal'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function AdminPage() {
   const cookieStore = await cookies()
@@ -41,12 +42,12 @@ export default async function AdminPage() {
   const { count: shopperCount } = await supabaseAdmin
     .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .eq('role', 'shopper');
+    .ilike('role', 'shopper');
 
   const { count: vendorCount } = await supabaseAdmin
     .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .eq('role', 'vendor');
+    .ilike('role', 'vendor');
 
   const { count: productCount } = await supabaseAdmin
     .from('products')
