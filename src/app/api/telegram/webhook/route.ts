@@ -16,8 +16,13 @@ async function sendMessage(chatId: number, text: string) {
 }
 
 export async function POST(request: Request) {
+  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("❌ CRITICAL: Missing Environment Variables!");
+  }
+
   try {
     const body = await request.json();
+    console.log("📥 Incoming Telegram Payload:", JSON.stringify(body, null, 2));
 
     // 1. Check if this is a Telegram Update object
     if (body.message) {
@@ -124,10 +129,8 @@ export async function POST(request: Request) {
     );
 
   } catch (error: any) {
-    console.error('Telegram Webhook error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: 500 }
-    );
+    console.error("❌ Webhook Error:", error.message || error);
+    // Always return 200 to Telegram so it doesn't get stuck in a retry loop
+    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 200 });
   }
 }
