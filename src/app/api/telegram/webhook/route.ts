@@ -37,10 +37,33 @@ export async function POST(request: Request) {
           "Welcome to the AVELLIN Vendor Portal! 🌟\n\nPlease reply with your registered vendor email address to authenticate your account and start uploading products."
         );
         return NextResponse.json({ success: true });
-      }
+      } else if (text.includes('@')) {
+        const email = text.trim().toLowerCase();
+        
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
 
-      // TODO: Handle other conversational states (like capturing the email and then the product details)
-      return NextResponse.json({ success: true });
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('*')
+          .eq('email', email)
+          .eq('role', 'vendor')
+          .single();
+
+        if (profile) {
+          await sendMessage(chatId, `Authentication successful, ${profile.name}! ✅\n\nYou are now linked to AVELLIN.\n\nTo upload a product, send a photo and include the details in the caption like this:\nTitle | Price | Category | Description`);
+        } else {
+          await sendMessage(chatId, "⚠️ Authentication failed. This email is not registered as an authorized vendor on AVELLIN.");
+        }
+        
+        return NextResponse.json({ success: true });
+      } else {
+        await sendMessage(chatId, "I didn't quite catch that. If you are trying to authenticate, please send your registered vendor email address.");
+        return NextResponse.json({ success: true });
+      }
     }
 
     // 2. Legacy/Direct insertion payload (fallback)
