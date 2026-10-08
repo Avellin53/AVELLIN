@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { Users, LayoutDashboard, ShieldCheck, Activity, LogOut } from 'lucide-react'
 
+import VendorCreationModal from './VendorCreationModal'
+
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
@@ -97,12 +99,15 @@ export default async function AdminPage() {
             <p className="text-sm text-neutral-500 font-medium">Welcome back, {user.email}</p>
           </div>
         </div>
-        <form action={handleLogout}>
-          <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-bold text-sm rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-600 transition shadow-sm w-full sm:w-auto">
-            <LogOut size={16} />
-            Secure Logout
-          </button>
-        </form>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <VendorCreationModal />
+          <form action={handleLogout} className="w-full sm:w-auto">
+            <button className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 font-bold text-sm rounded-xl hover:bg-red-50 hover:border-red-100 hover:text-red-600 transition shadow-sm w-full sm:w-auto">
+              <LogOut size={16} />
+              Secure Logout
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">

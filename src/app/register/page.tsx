@@ -111,11 +111,12 @@ export default function RegisterPage() {
     }
 
     // 2. Save profile data to profiles (both shopper and vendor info)
-    await supabase.from('profiles').insert({
+    await supabase.from('profiles').insert([{
       id: authData.user.id,
       email: formData.email,
       name: formData.fullName,
       role: formData.role,
+      created_at: new Date().toISOString(),
       measurements: {
         gender: formData.gender,
         standard_size: formData.standardSize,
@@ -123,7 +124,7 @@ export default function RegisterPage() {
       },
       style_preferences: formData.stylePreferences,
       vendor_details: null,
-    });
+    }]);
 
     // Redirect to verify
     router.push('/verify?email=' + encodeURIComponent(formData.email));
