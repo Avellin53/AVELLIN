@@ -27,13 +27,14 @@ export async function POST(request: Request) {
     // 1. Check if this is a Telegram Update object
     if (body.message) {
       const message = body.message;
-      
-      if (!message || (!message.text && !message.caption)) {
-        return NextResponse.json({ status: 'ignored' }); // Ignore non-text/non-caption messages for now
+      const payloadText = message?.text || message?.caption || '';
+
+      if (!message || !payloadText) {
+        return NextResponse.json({ status: 'ignored' }); 
       }
       
       const chatId = message.chat.id;
-      const text = message.text || message.caption || '';
+      const text = payloadText;
 
       // Handle the /start command
       if (text === '/start') {
@@ -60,10 +61,16 @@ export async function POST(request: Request) {
 
         if (profile) {
           // Save the chat ID to the vendor's profile
-          await supabaseAdmin
+          const { error: updateError } = await supabaseAdmin
             .from('profiles')
             .update({ telegram_chat_id: chatId.toString() })
             .eq('id', profile.id);
+
+          if (updateError) {
+            console.error("DB Update Error:", updateError);
+            await sendMessage(chatId, "⚠️ Authentication failed on our end. Database could not link your Chat ID.");
+            return NextResponse.json({ success: true }); // Return 200 to prevent Telegram retries
+          }
 
           await sendMessage(chatId, `Authentication successful, ${profile.name}! ✅\n\nYou are now linked to AVELLIN.\n\nTo upload a product, send a photo and include the details in the caption like this:\nTitle | Price | Category | Description`);
         } else {
