@@ -68,9 +68,8 @@ function VerifyContent() {
     toast.success('Welcome to AVELLIN!');
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData.session) {
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionData.session.user.id).maybeSingle();
-      if (profile?.role === 'vendor') {
-        router.push('/vendor/dashboard');
+      if (sessionData.session.user.email === 'fortuneonyeagwaziam@gmail.com') {
+        router.push('/admin');
       } else {
         router.push('/home');
       }

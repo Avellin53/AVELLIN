@@ -7,14 +7,6 @@ import { checkUserExists } from '@/app/actions/auth';
 import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
-const NIGERIAN_STATES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
-  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", 
-  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", 
-  "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", 
-  "Taraba", "Yobe", "Zamfara"
-];
-
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -27,21 +19,12 @@ export default function RegisterPage() {
     standardSize: 'M',
     height: 170,
     stylePreferences: [] as string[],
-    // Vendor fields
-    brandName: '',
-    brandDescription: '',
-    hubLocation: '',
-    businessEmail: '',
-    phoneNumber: '',
-    portfolioLink: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [nameStatus, setNameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
-  const [locationQuery, setLocationQuery] = useState('');
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const router = useRouter();
 
   const getPasswordStrength = (pass: string) => {
@@ -133,31 +116,14 @@ export default function RegisterPage() {
       email: formData.email,
       name: formData.fullName,
       role: formData.role,
-      measurements: formData.role === 'shopper' ? {
+      measurements: {
         gender: formData.gender,
         standard_size: formData.standardSize,
         height: formData.height,
-      } : null,
-      style_preferences: formData.role === 'shopper' ? formData.stylePreferences : null,
-      vendor_details: formData.role === 'vendor' ? {
-        brand_name: formData.brandName,
-        brand_description: formData.brandDescription,
-        hub_location: formData.hubLocation,
-        business_email: formData.businessEmail,
-        phone_number: formData.phoneNumber,
-        portfolio_link: formData.portfolioLink,
-      } : null,
+      },
+      style_preferences: formData.stylePreferences,
+      vendor_details: null,
     });
-
-    // If vendor, also populate the vendors table for the dashboard
-    if (formData.role === 'vendor') {
-      await supabase.from('vendors').insert({
-        id: authData.user.id,
-        email: formData.email,
-        name: formData.brandName || formData.fullName,
-        location: formData.hubLocation,
-      });
-    }
 
     // Redirect to verify
     router.push('/verify?email=' + encodeURIComponent(formData.email));
@@ -174,9 +140,9 @@ export default function RegisterPage() {
         
         <div className="text-center mb-6 mt-2">
           <h1 className="text-2xl font-bold text-charcoal">Create Account</h1>
-          <p className="text-xs text-charcoal-secondary mt-1">Step {step} of 5</p>
+          <p className="text-xs text-charcoal-secondary mt-1">Step {step} of 4</p>
           <div className="flex gap-1 justify-center mt-3">
-            {[1,2,3,4,5].map(i => (
+            {[1,2,3,4].map(i => (
               <div key={i} className={`h-1.5 w-8 rounded-full ${step >= i ? 'bg-terracotta' : 'bg-linen-border'}`} />
             ))}
           </div>
@@ -226,21 +192,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 2 && (
-            <div className="space-y-3 fade-in">
-              <button onClick={() => setFormData({...formData, role: 'shopper'})} className={`w-full p-4 rounded-xl border text-left transition ${formData.role === 'shopper' ? 'border-terracotta bg-terracotta/5' : 'border-linen-border bg-white hover:border-terracotta/50'}`}>
-                <h3 className="font-bold text-charcoal">Shopper</h3>
-                <p className="text-xs text-charcoal-secondary mt-1">Find your perfect fit with our AI recommendations</p>
-              </button>
-              <button onClick={() => setFormData({...formData, role: 'vendor'})} className={`w-full p-4 rounded-xl border text-left transition ${formData.role === 'vendor' ? 'border-terracotta bg-terracotta/5' : 'border-linen-border bg-white hover:border-terracotta/50'}`}>
-                <h3 className="font-bold text-charcoal">Vendor</h3>
-                <p className="text-xs text-charcoal-secondary mt-1">Sell your African fashion brand or beauty line on Avellin</p>
-              </button>
-              <button onClick={handleNext} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 transition hover:bg-black">Next <ArrowRight size={16} /></button>
-            </div>
-          )}
-
-          {step === 3 && formData.role === 'shopper' && (
+          {step === 2 && formData.role === 'shopper' && (
             <div className="space-y-4 fade-in">
               <div className="text-center mb-2">
                 <h2 className="font-bold text-charcoal text-lg">Fit Profile</h2>
@@ -273,7 +225,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 4 && formData.role === 'shopper' && (
+          {step === 3 && formData.role === 'shopper' && (
             <div className="space-y-4 fade-in">
               <div className="text-center mb-2">
                 <h2 className="font-bold text-charcoal text-lg">Style Preferences</h2>
@@ -297,89 +249,14 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 3 && formData.role === 'vendor' && (
-            <div className="space-y-4 fade-in">
-              <div className="text-center mb-2">
-                <h2 className="font-bold text-charcoal text-lg">Brand Details</h2>
-                <p className="text-xs text-charcoal-secondary mt-1">Tell us about your atelier or label.</p>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-charcoal mb-1">Brand Name</label>
-                <input type="text" value={formData.brandName} onChange={e => setFormData({...formData, brandName: e.target.value})} placeholder="E.g., Ozwald Studio" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
-              </div>
-              <div className="relative">
-                <label className="block text-xs font-bold text-charcoal mb-1">Hub Location</label>
-                <input 
-                  type="text" 
-                  value={locationQuery} 
-                  onChange={e => {
-                    setLocationQuery(e.target.value);
-                    setShowLocationDropdown(true);
-                  }} 
-                  onFocus={() => setShowLocationDropdown(true)}
-                  placeholder="E.g., Lagos" 
-                  className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" 
-                />
-                {showLocationDropdown && locationQuery.length > 0 && (
-                  <ul className="absolute z-50 w-full mt-1 bg-white border border-linen-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                    {NIGERIAN_STATES.filter(state => state.toLowerCase().includes(locationQuery.toLowerCase())).length > 0 ? (
-                      NIGERIAN_STATES.filter(state => state.toLowerCase().includes(locationQuery.toLowerCase())).map(state => (
-                        <li 
-                          key={state} 
-                          className="px-4 py-3 text-sm text-charcoal hover:bg-linen-surface cursor-pointer transition-colors border-b border-linen-border last:border-0"
-                          onClick={() => {
-                            setFormData({...formData, hubLocation: state});
-                            setLocationQuery(state);
-                            setShowLocationDropdown(false);
-                          }}
-                        >
-                          {state}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="px-4 py-3 text-sm text-warmgrey">No states found</li>
-                    )}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-charcoal mb-1">Short Description</label>
-                <textarea value={formData.brandDescription} onChange={e => setFormData({...formData, brandDescription: e.target.value})} rows={2} placeholder="What makes your brand unique?" className="w-full bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl p-3 text-sm outline-none transition resize-none"></textarea>
-              </div>
-              <button onClick={handleNext} disabled={!formData.brandName} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition hover:bg-black">Next <ArrowRight size={16} /></button>
-            </div>
-          )}
-
-          {step === 4 && formData.role === 'vendor' && (
-            <div className="space-y-4 fade-in">
-              <div className="text-center mb-2">
-                <h2 className="font-bold text-charcoal text-lg">Verification</h2>
-                <p className="text-xs text-charcoal-secondary mt-1">Secure your vendor application.</p>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-charcoal mb-1">Business Email</label>
-                <input type="email" value={formData.businessEmail} onChange={e => setFormData({...formData, businessEmail: e.target.value})} placeholder="hello@brand.com" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-charcoal mb-1">Phone Number</label>
-                <input type="tel" value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+234..." className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-charcoal mb-1">Portfolio / Social Link</label>
-                <input type="url" value={formData.portfolioLink} onChange={e => setFormData({...formData, portfolioLink: e.target.value})} placeholder="instagram.com/yourbrand" className="w-full h-12 bg-linen-surface border border-linen-border focus:border-terracotta rounded-xl px-4 text-sm outline-none transition" />
-              </div>
-              <button onClick={handleNext} disabled={!formData.businessEmail || !formData.phoneNumber || !formData.portfolioLink} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition hover:bg-black">Next <ArrowRight size={16} /></button>
-            </div>
-          )}
-
-          {step === 5 && (
+          {step === 4 && (
             <div className="space-y-6 fade-in text-center py-4">
               <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles size={24} />
               </div>
               <h2 className="text-xl font-bold text-charcoal">Profile Complete!</h2>
               <p className="text-sm text-charcoal-secondary">
-                {formData.role === 'shopper' ? 'We have generated your Avellin AI profile.' : 'Your vendor application is ready.'}
+                We have generated your Avellin AI profile.
               </p>
               
               <button onClick={handleSubmit} disabled={loading} className="w-full h-12 bg-terracotta text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-terracotta-dark transition shadow-md">

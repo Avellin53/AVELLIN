@@ -37,11 +37,10 @@ export default function LoginPage() {
       return;
     }
     
-    // Check if vendor or shopper
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+    // Check for Admin
     toast.success('Welcome back to AVELLIN!');
-    if (profile?.role === 'vendor') {
-      router.push('/vendor/dashboard');
+    if (data.user.email === 'fortuneonyeagwaziam@gmail.com') {
+      router.push('/admin');
     } else {
       router.push('/home');
     }
