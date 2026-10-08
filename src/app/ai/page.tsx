@@ -1,19 +1,23 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Send } from 'lucide-react';
+import { Sparkles, Send, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
 type Message = {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'ai';
   content: string;
   products?: any[];
 };
 
 export default function AIFitPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm Ms. Ave, your personal fashion concierge. Whether you're looking for a bespoke piece for an upcoming owambe, or just updating your casual wardrobe, I'm here to help." }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ms_ave_chat');
+      if (saved) return JSON.parse(saved);
+    }
+    return [{ role: 'assistant', content: "Hello! I'm Ms. Ave, your personal fashion concierge. Whether you're looking for a bespoke piece for an upcoming owambe, or just updating your casual wardrobe, I'm here to help." }];
+  });
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const router = useRouter();
@@ -32,6 +36,9 @@ export default function AIFitPage() {
   }, [router]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ms_ave_chat', JSON.stringify(messages));
+    }
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
@@ -77,8 +84,11 @@ export default function AIFitPage() {
   return (
     <div className="flex flex-col min-h-screen bg-linen pb-32">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-linen-border sticky top-0 z-40">
+      <div className="flex items-center justify-between px-4 py-4 bg-white border-b border-linen-border sticky top-0 z-40">
         <div className="flex items-center gap-3">
+          <button onClick={() => router.back()} className="p-2 hover:bg-linen-surface rounded-full transition text-charcoal">
+            <ChevronLeft size={24} />
+          </button>
           <div className="w-10 h-10 rounded-full bg-terracotta/10 text-terracotta flex items-center justify-center">
             <Sparkles size={20} />
           </div>
