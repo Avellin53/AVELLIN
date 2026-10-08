@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -14,7 +16,8 @@ export default async function AdminDashboard() {
 
   const { data: { user } } = await supabase.auth.getUser();
   
-  if (!user || user.email !== 'fortuneonyeagwaziam@gmail.com') {
+  const ADMIN_EMAIL = 'fortuneonyeagwaziam@gmail.com';
+  if (!user || user.email !== ADMIN_EMAIL) {
     redirect('/');
   }
 
