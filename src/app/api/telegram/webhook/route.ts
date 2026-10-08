@@ -1,9 +1,49 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+async function sendMessage(chatId: number, text: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) {
+    console.error('Missing TELEGRAM_BOT_TOKEN in environment variables.');
+    return;
+  }
+  
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text: text }),
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
+    // 1. Check if this is a Telegram Update object
+    if (body.message) {
+      const message = body.message;
+      
+      if (!message || !message.text) {
+        return NextResponse.json({ status: 'ignored' }); // Ignore non-text messages for now
+      }
+      
+      const chatId = message.chat.id;
+      const text = message.text;
+
+      // Handle the /start command
+      if (text === '/start') {
+        await sendMessage(
+          chatId, 
+          "Welcome to the AVELLIN Vendor Portal! 🌟\n\nPlease reply with your registered vendor email address to authenticate your account and start uploading products."
+        );
+        return NextResponse.json({ success: true });
+      }
+
+      // TODO: Handle other conversational states (like capturing the email and then the product details)
+      return NextResponse.json({ success: true });
+    }
+
+    // 2. Legacy/Direct insertion payload (fallback)
     const { vendorEmail, title, description, price, category, imageUrl } = body;
 
     if (!vendorEmail || !title || !price) {
