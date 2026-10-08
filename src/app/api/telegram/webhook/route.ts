@@ -28,12 +28,12 @@ export async function POST(request: Request) {
     if (body.message) {
       const message = body.message;
       
-      if (!message || !message.text) {
-        return NextResponse.json({ status: 'ignored' }); // Ignore non-text messages for now
+      if (!message || (!message.text && !message.caption)) {
+        return NextResponse.json({ status: 'ignored' }); // Ignore non-text/non-caption messages for now
       }
       
       const chatId = message.chat.id;
-      const text = message.text;
+      const text = message.text || message.caption || '';
 
       // Handle the /start command
       if (text === '/start') {
@@ -59,11 +59,65 @@ export async function POST(request: Request) {
           .single();
 
         if (profile) {
+          // Save the chat ID to the vendor's profile
+          await supabaseAdmin
+            .from('profiles')
+            .update({ telegram_chat_id: chatId.toString() })
+            .eq('id', profile.id);
+
           await sendMessage(chatId, `Authentication successful, ${profile.name}! ✅\n\nYou are now linked to AVELLIN.\n\nTo upload a product, send a photo and include the details in the caption like this:\nTitle | Price | Category | Description`);
         } else {
           await sendMessage(chatId, "⚠️ Authentication failed. This email is not registered as an authorized vendor on AVELLIN.");
         }
         
+        return NextResponse.json({ success: true });
+      } else if (text.includes('|')) {
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        // 1. Identify the vendor by chat_id
+        const { data: vendorProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('id, name')
+          .eq('telegram_chat_id', chatId.toString())
+          .single();
+
+        if (!vendorProfile) {
+          await sendMessage(chatId, "⚠️ Please authenticate with your email first.");
+          return NextResponse.json({ success: true });
+        }
+
+        // 2. Parse the product string: "Title | Price | Category | Description"
+        const parts = text.split('|').map((p: string) => p.trim());
+        const title = parts[0] || 'Untitled Product';
+        const rawPrice = parts[1] || '0';
+        const price = parseInt(rawPrice.replace(/[^0-9]/g, ''), 10); // Strip "naira" text
+        const category = parts[2] || 'Uncategorized';
+        const description = parts[3] || '';
+
+        // 3. Handle Image (Fallback to placeholder if no photo is attached yet)
+        // Note: We will implement true Telegram file fetching later, use placeholder for MVP
+        const imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff"; 
+
+        // 4. Insert into Products Table
+        const { error } = await supabaseAdmin.from('products').insert([
+          {
+            title,
+            price,
+            category,
+            description,
+            image_url: imageUrl,
+            vendor_id: vendorProfile.id,
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+        if (error) throw error;
+
+        await sendMessage(chatId, `🎉 Success! **${title}** has been published live to AVELLIN.\nShoppers can now see this item.`);
         return NextResponse.json({ success: true });
       } else {
         await sendMessage(chatId, "I didn't quite catch that. If you are trying to authenticate, please send your registered vendor email address.");
