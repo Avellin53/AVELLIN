@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { checkUserExists } from '@/app/actions/auth';
+import { checkUserExists, syncProfileAfterSignup } from '@/app/actions/auth';
 import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
@@ -110,8 +110,8 @@ export default function RegisterPage() {
       return;
     }
 
-    // 2. Save profile data to profiles (both shopper and vendor info)
-    await supabase.from('profiles').insert([{
+    // 2. Save profile data to profiles using server action (bypasses RLS)
+    const syncResult = await syncProfileAfterSignup({
       id: authData.user.id,
       email: formData.email,
       name: formData.fullName,
@@ -124,7 +124,13 @@ export default function RegisterPage() {
       },
       style_preferences: formData.stylePreferences,
       vendor_details: null,
-    }]);
+    });
+
+    if (syncResult.error) {
+      setError('Account created, but profile setup failed. Please contact support.');
+      setLoading(false);
+      return;
+    }
 
     // Redirect to verify
     router.push('/verify?email=' + encodeURIComponent(formData.email));
