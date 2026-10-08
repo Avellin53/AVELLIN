@@ -25,7 +25,7 @@ export default async function HomePage() {
     <div className="px-6 pt-4 pb-8 flex flex-col space-y-6">
       <h1 className="text-xl font-bold text-neutral-900">Your AI Feed</h1>
       {products && products.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
           {products.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}

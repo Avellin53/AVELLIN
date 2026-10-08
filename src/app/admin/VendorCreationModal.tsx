@@ -37,7 +37,7 @@ export default function VendorCreationModal() {
 
       {isOpen && (
         <div className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl w-[92%] max-w-md max-h-[90vh] overflow-y-auto p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-neutral-900">New Vendor</h2>
               <button onClick={() => setIsOpen(false)} className="text-neutral-400 hover:text-neutral-900 transition">

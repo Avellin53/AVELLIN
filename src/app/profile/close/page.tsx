@@ -32,7 +32,7 @@ export default function CloseAccountPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-linen w-full max-w-[420px] mx-auto pb-24">
+    <div className="flex flex-col min-h-screen bg-linen w-full max-w-md md:max-w-2xl mx-auto pb-24">
       <div className="bg-white border-b border-linen-border px-4 py-4 flex items-center justify-center relative sticky top-0 z-10 shadow-sm">
         <BackButton />
         <h1 className="font-bold text-charcoal text-lg">Close Account</h1>
@@ -68,7 +68,7 @@ export default function CloseAccountPage() {
       {/* Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl w-full max-w-[340px] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl w-[92%] max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-extrabold text-neutral-900 mb-2">Final Confirmation</h3>
             <p className="text-sm text-neutral-600 mb-6">
               This action cannot be undone. Do you really want to permanently close your Avellin account?

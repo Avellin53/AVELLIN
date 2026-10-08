@@ -13,23 +13,23 @@ export default function BottomNav() {
       <div className="flex items-center justify-around h-[68px] px-2 pb-2">
         <Link href="/home" className="flex flex-col items-center justify-center w-full h-full space-y-1 group">
           <Home size={22} className={`transition-colors ${pathname === '/home' ? 'text-terracotta' : 'text-warmgrey group-hover:text-charcoal'}`} />
-          <span className={`text-[10px] font-medium transition-colors ${pathname === '/home' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Home</span>
+          <span className={`whitespace-nowrap text-[10px] font-medium transition-colors ${pathname === '/home' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Home</span>
         </Link>
 
         <Link href="/browse" className="flex flex-col items-center justify-center w-full h-full space-y-1 relative group">
           <Compass size={22} className={`transition-colors ${pathname === '/browse' ? 'text-terracotta' : 'text-warmgrey group-hover:text-charcoal'}`} />
-          <span className={`text-[10px] font-medium transition-colors ${pathname === '/browse' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Browse</span>
+          <span className={`whitespace-nowrap text-[10px] font-medium transition-colors ${pathname === '/browse' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Browse</span>
           {pathname === '/browse' && <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-terracotta" />}
         </Link>
 
         <Link href="/ai" className="flex flex-col items-center justify-center w-full h-full space-y-1 group">
           <Sparkles size={22} className={`transition-colors ${pathname === '/ai' ? 'text-terracotta' : 'text-warmgrey group-hover:text-charcoal'}`} />
-          <span className={`text-[10px] font-medium transition-colors ${pathname === '/ai' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Ms. Ave</span>
+          <span className={`whitespace-nowrap text-[10px] font-medium transition-colors ${pathname === '/ai' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Ms. Ave</span>
         </Link>
 
         <Link href="/profile" className="flex flex-col items-center justify-center w-full h-full space-y-1 group">
           <User size={22} className={`transition-colors ${pathname === '/profile' ? 'text-terracotta' : 'text-warmgrey group-hover:text-charcoal'}`} />
-          <span className={`text-[10px] font-medium transition-colors ${pathname === '/profile' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Profile</span>
+          <span className={`whitespace-nowrap text-[10px] font-medium transition-colors ${pathname === '/profile' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Profile</span>
         </Link>
       </div>
     </nav>

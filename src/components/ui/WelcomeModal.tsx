@@ -27,7 +27,7 @@ export default function WelcomeModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl w-full max-w-[380px] p-6 shadow-2xl relative animate-in fade-in zoom-in duration-300">
+      <div className="bg-white rounded-3xl w-[92%] max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl relative animate-in fade-in zoom-in duration-300">
         <button 
           onClick={handleClose}
           className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 bg-neutral-100 rounded-full transition-colors"

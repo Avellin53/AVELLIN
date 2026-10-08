@@ -22,7 +22,7 @@ export default function AddressPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-linen w-full max-w-[420px] mx-auto pb-24">
+    <div className="flex flex-col min-h-screen bg-linen w-full max-w-md md:max-w-2xl mx-auto pb-24">
       <div className="bg-white border-b border-linen-border px-4 pt-4 flex flex-col relative sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-center mb-4 relative">
           <BackButton />

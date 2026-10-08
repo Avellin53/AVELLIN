@@ -40,7 +40,7 @@ export default async function ProfilePage() {
   const email = profile?.email || user.email;
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-linen w-full max-w-[420px] mx-auto pb-24">
+    <div className="relative flex flex-col min-h-screen bg-linen w-full max-w-md md:max-w-2xl mx-auto pb-24">
       <BackButton />
       
       {/* Header Section */}
