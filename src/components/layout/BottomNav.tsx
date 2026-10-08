@@ -63,7 +63,7 @@ export default function BottomNav() {
 
         <Link href="/ai" className="flex flex-col items-center justify-center w-full h-full space-y-1 group">
           <Sparkles size={22} className={`transition-colors ${pathname === '/ai' ? 'text-terracotta' : 'text-warmgrey group-hover:text-charcoal'}`} />
-          <span className={`text-[10px] font-medium transition-colors ${pathname === '/ai' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>AI Fit</span>
+          <span className={`text-[10px] font-medium transition-colors ${pathname === '/ai' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Ms. Ave</span>
         </Link>
 
         <Link href="/profile" className="flex flex-col items-center justify-center w-full h-full space-y-1 group">

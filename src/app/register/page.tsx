@@ -44,6 +44,22 @@ export default function RegisterPage() {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const router = useRouter();
 
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { label: '', color: 'bg-neutral-200', textClass: '', score: 0 };
+    let score = 0;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[a-z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+
+    if (score <= 2) return { label: 'Weak', color: 'bg-red-500', textClass: 'text-red-500', score };
+    if (score <= 4) return { label: 'Moderate', color: 'bg-yellow-500', textClass: 'text-yellow-500', score };
+    return { label: 'Strong', color: 'bg-green-500', textClass: 'text-green-500', score };
+  };
+
+  const strength = getPasswordStrength(formData.password);
+
   useEffect(() => {
     if (!formData.fullName) {
       setNameStatus('idle');
@@ -195,8 +211,18 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {formData.password && (
+                  <div className="mt-2">
+                    <div className="flex gap-1 h-1.5 w-full">
+                      <div className={`h-full flex-1 rounded-l-full ${strength.score >= 1 ? strength.color : 'bg-neutral-200'}`} />
+                      <div className={`h-full flex-1 ${strength.score >= 3 ? strength.color : 'bg-neutral-200'}`} />
+                      <div className={`h-full flex-1 rounded-r-full ${strength.score >= 5 ? strength.color : 'bg-neutral-200'}`} />
+                    </div>
+                    <p className={`text-[10px] font-bold mt-1 ${strength.textClass}`}>{strength.label}</p>
+                  </div>
+                )}
               </div>
-              <button onClick={handleNext} disabled={!formData.email || !formData.password || !formData.fullName || nameStatus !== 'available' || emailStatus !== 'available'} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition">Next <ArrowRight size={16} /></button>
+              <button onClick={handleNext} disabled={!formData.email || !formData.password || !formData.fullName || nameStatus !== 'available' || emailStatus !== 'available' || strength.label === 'Weak'} className="w-full h-12 mt-4 bg-charcoal text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition">Next <ArrowRight size={16} /></button>
             </div>
           )}
 

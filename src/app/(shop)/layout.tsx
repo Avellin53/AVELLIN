@@ -1,6 +1,7 @@
 import React from 'react';
 import TopHeader from "@/components/layout/TopHeader";
 import BottomNav from "@/components/layout/BottomNav";
+import WelcomeModal from "@/components/ui/WelcomeModal";
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
         {children}
       </main>
       <BottomNav />
+      <WelcomeModal />
     </div>
   );
 }
