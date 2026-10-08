@@ -4,7 +4,7 @@ import { Mail } from 'lucide-react';
 
 export default function InboxPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-linen w-full max-w-[420px] mx-auto pb-24">
+    <div className="flex flex-col min-h-screen bg-linen w-full max-w-md md:max-w-2xl mx-auto pb-24">
       <div className="bg-white border-b border-linen-border px-4 py-4 flex items-center justify-center relative sticky top-0 z-10 shadow-sm">
         <BackButton />
         <h1 className="font-bold text-charcoal text-lg">Inbox</h1>
