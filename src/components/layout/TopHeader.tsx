@@ -65,7 +65,7 @@ export default function TopHeader() {
               )}
               <h1 className="font-extrabold text-2xl tracking-tighter text-charcoal">Avellin</h1>
               <span className="px-2 py-0.5 rounded-full bg-terracotta-tint text-terracotta text-[10px] font-bold tracking-wider">
-                AI STUDIO
+                ATELIER
               </span>
             </div>
             <div className="flex items-center gap-1">

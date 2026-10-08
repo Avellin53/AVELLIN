@@ -66,8 +66,17 @@ function VerifyContent() {
     }
 
     toast.success('Welcome to AVELLIN!');
-    // Success - Redirect to home
-    router.push('/home');
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', sessionData.session.user.id).maybeSingle();
+      if (profile?.role === 'vendor') {
+        router.push('/vendor/dashboard');
+      } else {
+        router.push('/home');
+      }
+    } else {
+      router.push('/home');
+    }
   };
 
   return (

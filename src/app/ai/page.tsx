@@ -1,7 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BackButton from '@/components/ui/BackButton';
 import { Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function AIFitPage() {
   const [height, setHeight] = useState('');
@@ -9,6 +11,19 @@ export default function AIFitPage() {
   const [stylePreference, setStylePreference] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+        if (profile?.role === 'vendor') router.push('/vendor/dashboard');
+      }
+    };
+    checkRole();
+  }, [router]);
 
   const handleAnalyze = () => {
     if (!height || !standardSize || !stylePreference) return;

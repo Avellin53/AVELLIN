@@ -38,10 +38,10 @@ export default function LoginPage() {
     }
     
     // Check if vendor or shopper
-    const { data: vendorData } = await supabase.from('vendors').select('id').eq('id', data.user.id).maybeSingle();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
     toast.success('Welcome back to AVELLIN!');
-    if (vendorData) {
-      router.push('/vendor');
+    if (profile?.role === 'vendor') {
+      router.push('/vendor/dashboard');
     } else {
       router.push('/home');
     }

@@ -3,6 +3,7 @@ import { MapPin, Sparkles, Store, ArrowRight, AlertCircle } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import HubFilters from '@/components/shop/HubFilters';
 
@@ -25,7 +26,8 @@ export default async function BrowseFeed() {
   const { data: { user } } = await supabase.auth.getUser();
   let needsProfileCompletion = false;
   if (user) {
-    const { data: profile } = await supabase.from('profiles').select('measurements').eq('id', user.id).maybeSingle();
+    const { data: profile } = await supabase.from('profiles').select('measurements, role').eq('id', user.id).maybeSingle();
+    if (profile?.role === 'vendor') redirect('/vendor/dashboard');
     if (profile && !profile.measurements) {
       needsProfileCompletion = true;
     }
