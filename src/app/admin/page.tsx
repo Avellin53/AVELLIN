@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -29,22 +30,29 @@ export default async function AdminPage() {
     redirect('/')
   }
 
+  // Use service role key to bypass RLS for admin metrics
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  )
+
   // Fetch metrics
-  const { count: shopperCount } = await supabase
+  const { count: shopperCount } = await supabaseAdmin
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .eq('role', 'shopper');
 
-  const { count: vendorCount } = await supabase
+  const { count: vendorCount } = await supabaseAdmin
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .eq('role', 'vendor');
 
-  const { count: productCount } = await supabase
+  const { count: productCount } = await supabaseAdmin
     .from('products')
     .select('*', { count: 'exact', head: true });
 
-  const { data: usersList } = await supabase
+  const { data: usersList } = await supabaseAdmin
     .from('profiles')
     .select('id, name, email, role, created_at')
     .order('created_at', { ascending: false });
