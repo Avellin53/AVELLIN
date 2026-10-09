@@ -39,6 +39,42 @@ export async function POST(request: Request) {
       const chatId = message.chat.id;
       const text = payloadText;
 
+      // Handle Vendor Replies
+      const replyTo = message.reply_to_message;
+      if (replyTo && replyTo.text && replyTo.text.includes('Ref: ')) {
+        const match = replyTo.text.match(/Ref: ([a-f0-9\-]+)/);
+        if (match) {
+          const conversationId = match[1];
+
+          const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            { auth: { persistSession: false } }
+          );
+
+          // 2. Identify Vendor
+          const { data: vendor } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('telegram_chat_id', chatId.toString())
+            .single();
+
+          if (vendor) {
+            // 3. Insert into Supabase
+            await supabaseAdmin.from('messages').insert({
+              conversation_id: conversationId,
+              sender_id: vendor.id,
+              content: text,
+              created_at: new Date().toISOString()
+            });
+
+            // 4. Confirm to Vendor
+            await sendMessage(chatId, "✅ Reply delivered to shopper!");
+          }
+          return NextResponse.json({ success: true });
+        }
+      }
+
       // Handle the /start command
       if (text === '/start') {
         await sendMessage(

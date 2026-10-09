@@ -23,6 +23,8 @@ export default function ChatPage({ params }: ChatProps) {
   const [inputText, setInputText] = useState("");
   const [product, setProduct] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [convVendorId, setConvVendorId] = useState<string | null>(null);
+  const [convProductId, setConvProductId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const supabase = createBrowserClient(
@@ -44,17 +46,24 @@ export default function ChatPage({ params }: ChatProps) {
         .from('conversations')
         .select(`
           product_id,
+          vendor_id,
           products (
+            id,
             title,
             price,
-            image_url
+            image_url,
+            vendor_id
           )
         `)
         .eq('id', conversationId)
         .single();
         
-      if (conv && conv.products) {
-        setProduct(conv.products);
+      if (conv) {
+        setConvVendorId(conv.vendor_id);
+        setConvProductId(conv.product_id);
+        if (conv.products) {
+          setProduct(conv.products);
+        }
       }
 
       // Fetch historical messages
@@ -101,13 +110,17 @@ export default function ChatPage({ params }: ChatProps) {
     const content = inputText;
     setInputText("");
 
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_id: currentUserId,
-        content
-      });
+    const { error } = await fetch('/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversationId,
+        content,
+        shopperId: currentUserId,
+        vendorId: product?.vendor_id || convVendorId,
+        productId: product?.id || convProductId
+      })
+    }).then(res => res.json());
       
     if (error) {
       console.error("Failed to send message:", error);
