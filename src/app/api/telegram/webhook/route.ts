@@ -108,9 +108,43 @@ export async function POST(request: Request) {
         const category = parts[2] || 'Uncategorized';
         const description = parts[3] || '';
 
-        // 3. Handle Image (Fallback to placeholder if no photo is attached yet)
-        // Note: We will implement true Telegram file fetching later, use placeholder for MVP
-        const imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff"; 
+        // 3. Handle Image (Fetch real photo from Telegram and upload to Supabase Storage)
+        let imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff"; 
+
+        if (message.photo && message.photo.length > 0) {
+          try {
+            const photo = message.photo[message.photo.length - 1];
+            const token = process.env.TELEGRAM_BOT_TOKEN;
+            const fileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${photo.file_id}`);
+            const fileData = await fileRes.json();
+            
+            if (fileData.ok) {
+              const filePath = fileData.result.file_path;
+              const downloadUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
+              
+              const imageRes = await fetch(downloadUrl);
+              const imageBuffer = await imageRes.arrayBuffer();
+              
+              const fileName = `${Date.now()}_${photo.file_id}.jpg`;
+              
+              const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+                .from('product-images')
+                .upload(fileName, imageBuffer, {
+                  contentType: 'image/jpeg',
+                  upsert: false
+                });
+                
+              if (!uploadError) {
+                const { data: publicUrlData } = supabaseAdmin.storage.from('product-images').getPublicUrl(fileName);
+                imageUrl = publicUrlData.publicUrl;
+              } else {
+                console.error("Storage Upload Error:", uploadError);
+              }
+            }
+          } catch (imgError) {
+            console.error("Error processing Telegram image:", imgError);
+          }
+        }
 
         // 4. Insert into Products Table
         const { error: insertError } = await supabaseAdmin.from('products').insert([
