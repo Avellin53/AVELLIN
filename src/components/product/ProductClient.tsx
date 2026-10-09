@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Share2, Heart, BadgeCheck, Sparkles, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { Product } from '@/types';
+import MessageVendorButton from '@/components/product/MessageVendorButton';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from 'sonner';
 
@@ -151,6 +152,13 @@ export default function ProductClient({ product, crossSell }: { product: Product
             </div>
           )}
         </div>
+
+        {/* Contact Vendor */}
+        {(product as any).vendor_id && (
+          <div className="flex flex-col gap-3">
+            <MessageVendorButton productId={product.id} vendorId={(product as any).vendor_id} />
+          </div>
+        )}
 
         {/* 6. Complete the Look */}
         {crossSell.length > 0 && (
