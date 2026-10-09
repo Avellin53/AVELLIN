@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 export default function NewListing() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     category: 'Fashion',
@@ -28,39 +29,62 @@ export default function NewListing() {
     }
     
     setLoading(true);
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Not authenticated');
-      setLoading(false);
-      return;
-    }
+    try {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Not authenticated');
+        return;
+      }
 
-    const { error } = await supabase.from('products').insert({
-      vendor_id: user.id,
-      title: formData.title,
-      price: parseInt(formData.price),
-      category: formData.category,
-      biometrics: {
-        bust: parseInt(formData.bust) || null,
-        waist: parseInt(formData.waist) || null,
-        shoulders: parseInt(formData.shoulders) || null,
-        length: parseInt(formData.length) || null,
-      },
-      stock: formData.stock
-    });
+      let image_url = null;
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, imageFile);
+        
+        if (uploadError) {
+          throw new Error(`Image upload failed: ${uploadError.message}`);
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+          
+        image_url = publicUrlData.publicUrl;
+      }
 
-    setLoading(false);
+      const { error } = await supabase.from('products').insert({
+        vendor_id: user.id,
+        title: formData.title,
+        price: parseInt(formData.price),
+        category: formData.category,
+        image_url,
+        biometrics: {
+          bust: parseInt(formData.bust) || null,
+          waist: parseInt(formData.waist) || null,
+          shoulders: parseInt(formData.shoulders) || null,
+          length: parseInt(formData.length) || null,
+        },
+        stock: formData.stock
+      });
 
-    if (error) {
-      toast.error(error.message);
-    } else {
+      if (error) {
+        throw new Error(error.message);
+      }
+
       toast.success('Listing published successfully!');
       router.push('/vendor');
+    } catch (err: any) {
+      toast.error(err.message || 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,12 +148,20 @@ export default function NewListing() {
               <p className="text-[10px] text-charcoal-secondary">Upload up to 5 high-quality images</p>
             </div>
           </div>
-          <button className="w-full h-32 border-2 border-dashed border-terracotta/30 bg-terracotta/5 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-terracotta/10 transition">
+          <div className="relative w-full h-32 border-2 border-dashed border-terracotta/30 bg-terracotta/5 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-terracotta/10 transition cursor-pointer">
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
             <div className="p-3 bg-white rounded-full shadow-sm">
               <UploadCloud size={20} className="text-terracotta" />
             </div>
-            <span className="text-xs font-bold text-terracotta">Tap to upload images</span>
-          </button>
+            <span className="text-xs font-bold text-terracotta">
+              {imageFile ? imageFile.name : "Tap to upload image"}
+            </span>
+          </div>
         </div>
 
         {/* AI Biometrics */}

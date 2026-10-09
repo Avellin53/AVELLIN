@@ -28,29 +28,34 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
 
   const sizes = dbProduct.stock ? Object.keys(dbProduct.stock).filter(k => dbProduct.stock[k] > 0) : ['S', 'M', 'L'];
   
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('product_id', id);
+
+  const reviewsCount = reviews?.length || 0;
+  const rating = reviewsCount > 0 
+    ? (reviews!.reduce((acc, r) => acc + r.rating, 0) / reviewsCount).toFixed(1)
+    : null;
+
   const product: any = {
     ...dbProduct,
     priceFormatted: `₦${dbProduct.price?.toLocaleString()}`,
-    rating: '4.8',
-    reviewsCount: 124,
+    rating,
+    reviewsCount,
     sizes: sizes.length ? sizes : ['S', 'M', 'L'],
-    editorialNotes: "Handcrafted with premium materials. Exclusively on Avellin.",
-    specs: {
-      material: "Premium Blend",
-      lining: "Unlined",
-      hardware: "Minimal",
-      care: "Dry clean recommended"
-    },
-    sizingData: {
+    editorialNotes: dbProduct.editorial_notes || null,
+    specs: dbProduct.specs || null,
+    sizingData: dbProduct.biometrics ? {
       recommendedSize: sizes.length ? sizes[0] : 'M',
       fitPercentage: 98,
       metrics: {
-        bust: dbProduct.biometrics?.bust || '90cm',
-        shoulders: dbProduct.biometrics?.shoulders || '42cm',
-        waist: dbProduct.biometrics?.waist || '70cm',
-        length: dbProduct.biometrics?.length || '65cm'
+        bust: dbProduct.biometrics.bust ? `${dbProduct.biometrics.bust}cm` : null,
+        shoulders: dbProduct.biometrics.shoulders ? `${dbProduct.biometrics.shoulders}cm` : null,
+        waist: dbProduct.biometrics.waist ? `${dbProduct.biometrics.waist}cm` : null,
+        length: dbProduct.biometrics.length ? `${dbProduct.biometrics.length}cm` : null
       }
-    }
+    } : null
   };
 
   const { data: crossSellDb } = await supabase.from('products').select(`*, vendor:vendors(name)`).neq('id', id).limit(4);

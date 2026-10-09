@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     fallbackChatId = body?.message?.chat?.id || null;
-    console.log("📥 Incoming Telegram Payload:", JSON.stringify(body, null, 2));
+    // Removed verbose payload logging to prevent console spam
 
     // 1. Check if this is a Telegram Update object
     if (body.message) {
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         const description = parts[3] || '';
 
         // 3. Handle Image (Fetch real photo from Telegram and upload to Supabase Storage)
-        let imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff"; 
+        let imageUrl = "/images/placeholder.png"; 
 
         if (message.photo && message.photo.length > 0) {
           try {
@@ -144,6 +144,9 @@ export async function POST(request: Request) {
           } catch (imgError) {
             console.error("Error processing Telegram image:", imgError);
           }
+        } else {
+          // You could choose to enforce an image here and throw an error, 
+          // but we fall back to a local placeholder instead of Unsplash.
         }
 
         // 4. Insert into Products Table
