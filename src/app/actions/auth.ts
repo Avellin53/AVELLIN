@@ -28,7 +28,12 @@ export async function syncProfileAfterSignup(profileData: any) {
     
     // Insert into profiles bypassing RLS
     const { error: profileError } = await supabaseAdmin.from('profiles').insert([
-      profileData
+      {
+        id: profileData.id,
+        email: profileData.email,
+        name: profileData.name || 'User',
+        role: profileData.role || 'shopper'
+      }
     ])
 
     if (profileError) {
