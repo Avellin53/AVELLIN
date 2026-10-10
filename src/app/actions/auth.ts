@@ -5,7 +5,8 @@ import { createClient } from '@supabase/supabase-js'
 export async function checkUserExists(field: 'name' | 'email', value: string) {
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! 
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
   )
   
   const { data } = await supabaseAdmin
@@ -21,9 +22,11 @@ export async function syncProfileAfterSignup(profileData: any) {
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
     )
     
+    // Insert into profiles bypassing RLS
     const { error: profileError } = await supabaseAdmin.from('profiles').insert([
       profileData
     ])
