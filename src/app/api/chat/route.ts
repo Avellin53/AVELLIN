@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       messages,
     });
 
-    return result.toTextStreamResponse();
+    return result.toDataStreamResponse();
   } catch (error: any) {
     console.error("AI Stream Error:", error);
     return new Response(JSON.stringify({ error: "AI services are temporarily unavailable" }), {
