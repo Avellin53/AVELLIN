@@ -19,8 +19,16 @@ export async function POST(req: Request) {
     });
 
     return result.toDataStreamResponse();
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI Route Error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to process AI request' }), { status: 500 });
+    return new Response(
+      JSON.stringify({
+        error: error?.message || 'Failed to process AI request',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

@@ -1,13 +1,217 @@
-import React from 'react';
-import { ShoppingBag } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
+import { useCartStore } from '@/store/cartStore';
+import { toast } from 'sonner';
 
 export default function CartPage() {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  const cartItems = useCartStore((state) => state.cartItems || []);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const clearCart = useCartStore((state) => state.clearCart);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center bg-linen px-4">
+        <div className="w-8 h-8 border-2 border-terracotta border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const subtotal = cartItems.reduce(
+    (total, item) => total + (item.product.price || 0) * item.quantity,
+    0
+  );
+
   return (
-    <div className="relative flex flex-col h-screen items-center justify-center px-4 bg-linen">
-      <BackButton />
-      <ShoppingBag size={48} className="text-neutral-200 mb-4" strokeWidth={1.5} />
-      <span className="text-neutral-500 font-medium">Your cart is empty.</span>
+    <div className="flex flex-col min-h-screen bg-linen pb-32">
+      {/* Top Navigation */}
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-linen-border px-4 py-3 flex items-center justify-between max-w-[420px] mx-auto w-full">
+        <button
+          onClick={() => router.back()}
+          className="p-2 -ml-2 rounded-full hover:bg-neutral-100 transition text-charcoal"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="text-base font-bold text-charcoal">
+          Shopping Cart ({cartItems.length})
+        </h1>
+        {cartItems.length > 0 ? (
+          <button
+            onClick={() => {
+              clearCart();
+              toast.info('Cart cleared');
+            }}
+            className="text-xs font-semibold text-warmgrey hover:text-red-500 transition"
+          >
+            Clear
+          </button>
+        ) : (
+          <div className="w-8"></div>
+        )}
+      </div>
+
+      <div className="max-w-[420px] mx-auto w-full px-4 pt-4 flex-1 flex flex-col">
+        {cartItems.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 bg-linen-surface rounded-full flex items-center justify-center mb-4 text-warmgrey border border-linen-border">
+              <ShoppingBag size={36} strokeWidth={1.5} />
+            </div>
+            <h2 className="text-lg font-bold text-charcoal mb-1">
+              Your cart is empty
+            </h2>
+            <p className="text-xs text-warmgrey max-w-xs mb-6">
+              Looks like you haven't added any luxury pieces yet. Explore our curated collections to get started.
+            </p>
+            <Link
+              href="/home"
+              className="px-6 py-3 bg-terracotta text-white rounded-xl text-sm font-bold shadow-md hover:bg-terracotta-dark transition"
+            >
+              Start Shopping
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Cart Items List */}
+            <div className="space-y-3">
+              {cartItems.map((item) => {
+                const itemTotal = (item.product.price || 0) * item.quantity;
+                return (
+                  <div
+                    key={item.product.id}
+                    className="bg-white rounded-2xl p-3.5 border border-linen-border shadow-sm flex gap-3.5 items-center"
+                  >
+                    {/* Thumbnail */}
+                    <Link
+                      href={`/product/${item.product.id}`}
+                      className="w-20 h-24 bg-neutral-100 rounded-xl overflow-hidden flex-shrink-0 relative"
+                    >
+                      {item.product.image_url ? (
+                        <img
+                          src={item.product.image_url}
+                          alt={item.product.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-xs text-neutral-400">
+                          No Image
+                        </div>
+                      )}
+                    </Link>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch py-0.5">
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <Link
+                            href={`/product/${item.product.id}`}
+                            className="text-sm font-bold text-charcoal line-clamp-1 hover:text-terracotta transition"
+                          >
+                            {item.product.title}
+                          </Link>
+                          <button
+                            onClick={() => {
+                              removeFromCart(item.product.id);
+                              toast.info('Item removed');
+                            }}
+                            className="text-neutral-400 hover:text-red-500 transition p-1 -mr-1"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        {item.product.category && (
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-warmgrey">
+                            {item.product.category}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-sm font-extrabold text-charcoal">
+                          ₦{itemTotal.toLocaleString()}
+                        </span>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center bg-linen-surface border border-linen-border rounded-lg">
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.product.id, item.quantity - 1)
+                            }
+                            className="p-1.5 text-charcoal hover:bg-neutral-200 rounded-l-lg transition"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={13} />
+                          </button>
+                          <span className="px-2.5 text-xs font-bold text-charcoal">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.product.id, item.quantity + 1)
+                            }
+                            className="p-1.5 text-charcoal hover:bg-neutral-200 rounded-r-lg transition"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Summary Card */}
+            <div className="bg-white rounded-2xl p-4 border border-linen-border shadow-sm space-y-3 mt-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-charcoal">
+                Order Summary
+              </h3>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex justify-between text-warmgrey">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-charcoal">
+                    ₦{subtotal.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between text-warmgrey">
+                  <span>Delivery</span>
+                  <span className="font-semibold text-emerald-600">
+                    Complimentary
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-linen-border flex justify-between text-sm font-extrabold text-charcoal">
+                  <span>Total</span>
+                  <span>₦{subtotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Checkout Action Button */}
+            <button
+              onClick={() => {
+                toast.success('Proceeding to checkout...');
+              }}
+              className="w-full bg-neutral-900 text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-lg hover:bg-black transition mt-2"
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

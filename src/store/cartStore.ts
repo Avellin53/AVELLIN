@@ -1,42 +1,102 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-interface Product {
+export interface Product {
   id: string;
   title: string;
   price: number;
   image_url?: string;
   vendor_id?: string;
   category?: string;
+  description?: string;
+  [key: string]: any;
 }
 
-interface CartItem {
+export interface CartItem {
   product: Product;
   quantity: number;
 }
 
 interface CartState {
-  items: CartItem[];
+  cartItems: CartItem[];
+  items: CartItem[]; // alias for compatibility
   addToCart: (product: Product) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  clearCart: () => void;
   cartCount: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  addToCart: (product) => set((state) => {
-    const existingItem = state.items.find(item => item.product.id === product.id);
-    if (existingItem) {
-      return {
-        items: state.items.map(item => 
-          item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      };
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      cartItems: [],
+      items: [],
+      addToCart: (product: Product) => {
+        set((state) => {
+          const currentItems = state.cartItems || [];
+          const existingIndex = currentItems.findIndex(
+            (item) => item.product.id === product.id
+          );
+
+          let updatedItems: CartItem[];
+          if (existingIndex > -1) {
+            updatedItems = currentItems.map((item, index) =>
+              index === existingIndex
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            );
+          } else {
+            updatedItems = [...currentItems, { product, quantity: 1 }];
+          }
+
+          return {
+            cartItems: updatedItems,
+            items: updatedItems,
+          };
+        });
+      },
+      removeFromCart: (productId: string) => {
+        set((state) => {
+          const updatedItems = (state.cartItems || []).filter(
+            (item) => item.product.id !== productId
+          );
+          return {
+            cartItems: updatedItems,
+            items: updatedItems,
+          };
+        });
+      },
+      updateQuantity: (productId: string, quantity: number) => {
+        set((state) => {
+          if (quantity <= 0) {
+            const updatedItems = (state.cartItems || []).filter(
+              (item) => item.product.id !== productId
+            );
+            return {
+              cartItems: updatedItems,
+              items: updatedItems,
+            };
+          }
+          const updatedItems = (state.cartItems || []).map((item) =>
+            item.product.id === productId ? { ...item, quantity } : item
+          );
+          return {
+            cartItems: updatedItems,
+            items: updatedItems,
+          };
+        });
+      },
+      clearCart: () => {
+        set({ cartItems: [], items: [] });
+      },
+      cartCount: () => {
+        const items = get().cartItems || [];
+        return items.reduce((total, item) => total + item.quantity, 0);
+      },
+    }),
+    {
+      name: 'avellin_cart_storage',
     }
-    return { items: [...state.items, { product, quantity: 1 }] };
-  }),
-  cartCount: () => {
-    const { items } = get();
-    return items.reduce((total, item) => total + item.quantity, 0);
-  }
-}));
+  )
+);

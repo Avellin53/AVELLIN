@@ -8,18 +8,17 @@ export default function WelcomeModal() {
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('avellin_has_seen_welcome');
+    const hasSeenWelcome = localStorage.getItem('has_seen_welcome') || localStorage.getItem('avellin_has_seen_welcome');
     if (!hasSeenWelcome) {
       // Delay slightly for dramatic effect
-      const timer = setTimeout(() => setIsOpen(true), 1000);
+      const timer = setTimeout(() => setIsOpen(true), 800);
       return () => clearTimeout(timer);
     }
   }, []);
 
   const handleClose = () => {
-    if (dontShowAgain) {
-      localStorage.setItem('avellin_has_seen_welcome', 'true');
-    }
+    localStorage.setItem('has_seen_welcome', 'true');
+    localStorage.setItem('avellin_has_seen_welcome', 'true');
     setIsOpen(false);
   };
 
