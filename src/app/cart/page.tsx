@@ -28,10 +28,15 @@ export default function CartPage() {
     );
   }
 
+  const [tipAmount, setTipAmount] = useState<number>(0);
+  const [customTip, setCustomTip] = useState<string>('');
+
   const subtotal = cartItems.reduce(
     (total, item) => total + (item.product.price || 0) * item.quantity,
     0
   );
+
+  const finalTotal = subtotal + tipAmount;
 
   return (
     <div className="flex flex-col min-h-screen bg-linen pb-32">
@@ -174,6 +179,94 @@ export default function CartPage() {
               })}
             </div>
 
+            {/* ======================================================== */}
+            {/* DIRECT ARTISAN TIPPING SECTION */}
+            {/* ======================================================== */}
+            <div className="bg-white rounded-2xl p-4 border border-linen-border shadow-sm space-y-3 mt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs">
+                    ✨
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-charcoal">
+                    Tip the Designer
+                  </h3>
+                </div>
+                {tipAmount > 0 && (
+                  <button
+                    onClick={() => {
+                      setTipAmount(0);
+                      setCustomTip('');
+                    }}
+                    className="text-[11px] font-bold text-warmgrey hover:text-red-500 transition"
+                  >
+                    Remove Tip
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-warmgrey leading-relaxed">
+                100% of your tip goes directly to the Nigerian weavers, tailors, and artisans crafting your bespoke piece.
+              </p>
+
+              {/* Quick Select Tip Chips */}
+              <div className="grid grid-cols-4 gap-2">
+                {[1000, 2500, 5000].map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => {
+                      setTipAmount(amount);
+                      setCustomTip('');
+                      toast.success(`₦${amount.toLocaleString()} tip added for artisans!`);
+                    }}
+                    className={`py-2 px-1 rounded-xl text-xs font-bold transition border ${
+                      tipAmount === amount && !customTip
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                        : 'bg-linen-surface text-charcoal border-linen-border hover:bg-neutral-100'
+                    }`}
+                  >
+                    ₦{amount.toLocaleString()}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const customNum = parseInt(customTip, 10) || 0;
+                    setTipAmount(customNum);
+                  }}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition border ${
+                    customTip
+                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
+                      : 'bg-linen-surface text-charcoal border-linen-border hover:bg-neutral-100'
+                  }`}
+                >
+                  Custom
+                </button>
+              </div>
+
+              {/* Custom Tip Input */}
+              <div className="pt-1">
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs font-bold text-warmgrey">
+                    ₦
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Enter custom tip amount..."
+                    value={customTip}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomTip(val);
+                      const parsed = parseInt(val, 10);
+                      setTipAmount(isNaN(parsed) || parsed < 0 ? 0 : parsed);
+                    }}
+                    className="w-full bg-linen-surface border border-linen-border rounded-xl pl-8 pr-3 py-2 text-xs font-semibold text-charcoal focus:outline-none focus:border-terracotta"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Summary Card */}
             <div className="bg-white rounded-2xl p-4 border border-linen-border shadow-sm space-y-3 mt-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-charcoal">
@@ -186,6 +279,12 @@ export default function CartPage() {
                     ₦{subtotal.toLocaleString()}
                   </span>
                 </div>
+                {tipAmount > 0 && (
+                  <div className="flex justify-between text-amber-700 font-semibold bg-amber-50 -mx-2 px-2 py-1 rounded-lg">
+                    <span>Artisan Tip</span>
+                    <span>+₦{tipAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-warmgrey">
                   <span>Delivery</span>
                   <span className="font-semibold text-emerald-600">
@@ -194,7 +293,7 @@ export default function CartPage() {
                 </div>
                 <div className="pt-2 border-t border-linen-border flex justify-between text-sm font-extrabold text-charcoal">
                   <span>Total</span>
-                  <span>₦{subtotal.toLocaleString()}</span>
+                  <span>₦{finalTotal.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -202,7 +301,9 @@ export default function CartPage() {
             {/* Checkout Action Button */}
             <button
               onClick={() => {
-                toast.success('Proceeding to checkout...');
+                toast.success('Proceeding to checkout...', {
+                  description: `Order Total: ₦${finalTotal.toLocaleString()} (Includes ₦${tipAmount.toLocaleString()} artisan tip)`,
+                });
               }}
               className="w-full bg-neutral-900 text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-lg hover:bg-black transition mt-2"
             >

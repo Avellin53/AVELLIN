@@ -5,6 +5,7 @@ import { Sparkles, Send, ChevronLeft, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useChat, Message } from 'ai/react';
+import ColorAnalysisCard from '@/components/profile/ColorAnalysisCard';
 
 export default function AIFitPage() {
   const router = useRouter();
@@ -129,6 +130,11 @@ export default function AIFitPage() {
               <p className="text-xs text-warmgrey max-w-xs mt-1">
                 I'm Ms. Ave, your personal luxury fashion concierge. Tell me about your next occasion or style vision!
               </p>
+            </div>
+
+            {/* Color Theory Feature Integration */}
+            <div className="w-full pt-1">
+              <ColorAnalysisCard />
             </div>
 
             {/* Quick Suggestion Chips */}

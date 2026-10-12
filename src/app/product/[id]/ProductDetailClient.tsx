@@ -53,11 +53,20 @@ export default function ProductDetailClient({
   vendor,
   initialReviews = [],
   currentUser,
+  sizePassport,
 }: {
   product: Product;
   vendor?: { id: string; name?: string; email?: string; phone?: string } | null;
   initialReviews?: Review[];
   currentUser?: { id: string; email?: string } | null;
+  sizePassport?: {
+    shoulder?: string;
+    bust?: string;
+    waist?: string;
+    inseam?: string;
+    height?: string;
+    unit?: string;
+  } | null;
 }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -101,21 +110,26 @@ export default function ProductDetailClient({
     });
   };
 
+  // Bespoke Size Passport snippet
+  const sizePassportSnippet = sizePassport && (sizePassport.shoulder || sizePassport.bust || sizePassport.waist || sizePassport.inseam)
+    ? `\n\nHere is my Size Passport for a bespoke fit: Shoulder: ${sizePassport.shoulder || 'N/A'}, Bust: ${sizePassport.bust || 'N/A'}, Waist: ${sizePassport.waist || 'N/A'}, Inseam: ${sizePassport.inseam || 'N/A'}.`
+    : '';
+
   // Vendor contact link computation
   const cleanPhone = vendor?.phone ? vendor.phone.replace(/[^0-9]/g, '') : '';
+  const baseWhatsappText = `Hello, I am interested in buying "${product.title}" on AVELLIN.${sizePassportSnippet}`;
   const vendorWhatsappLink = cleanPhone
-    ? `https://wa.me/${cleanPhone}?text=Hello,%20I%20am%20interested%20in%20buying%20"${encodeURIComponent(
-        product.title
-      )}"%20on%20AVELLIN`
+    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(baseWhatsappText)}`
     : null;
 
+  const baseEmailBody = `Hello,\n\nI am interested in buying "${product.title}" on AVELLIN.${sizePassportSnippet}\n\nLooking forward to hearing from you.`;
   const vendorEmailLink = vendor?.email
     ? `mailto:${vendor.email}?subject=${encodeURIComponent(
         `AVELLIN Inquiry: ${product.title}`
-      )}`
+      )}&body=${encodeURIComponent(baseEmailBody)}`
     : `mailto:concierge@avellin.com?subject=${encodeURIComponent(
         `AVELLIN Inquiry: ${product.title}`
-      )}`;
+      )}&body=${encodeURIComponent(baseEmailBody)}`;
 
   // Average rating calculation
   const totalReviewsCount = reviews.length;

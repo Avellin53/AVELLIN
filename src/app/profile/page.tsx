@@ -5,7 +5,9 @@ import { redirect } from 'next/navigation';
 import SignOutButton from './SignOutButton';
 import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
-import { Package, Inbox, Heart, Store, BookUser, UserCog, UserX, ChevronRight } from 'lucide-react';
+import { Package, Inbox, Heart, Store, BookUser, UserCog, UserX, ChevronRight, Ruler } from 'lucide-react';
+import AvellinBlackCard from '@/components/profile/AvellinBlackCard';
+import ColorAnalysisCard from '@/components/profile/ColorAnalysisCard';
 
 const MenuItem = ({ icon: Icon, label, href }: { icon: any, label: string, href: string }) => (
   <Link href={href} className="flex justify-between items-center px-4 py-4 border-b border-neutral-100 bg-white hover:bg-neutral-50 cursor-pointer transition">
@@ -44,14 +46,31 @@ export default async function ProfilePage() {
       <BackButton />
       
       {/* Header Section */}
-      <div className="px-4 py-6 mt-12 bg-white border-b border-neutral-100">
-        <h1 className="text-xl font-bold text-neutral-900">Welcome {firstName}!</h1>
-        <p className="text-sm text-amber-600 mt-1">{email}</p>
+      <div className="px-4 py-6 mt-12 bg-white border-b border-neutral-100 space-y-4">
+        <div>
+          <h1 className="text-xl font-bold text-neutral-900">Welcome {firstName}!</h1>
+          <p className="text-sm text-amber-600 mt-0.5">{email}</p>
+        </div>
+
+        {/* 5. The Avellin Black Card (VIP Loyalty) */}
+        <AvellinBlackCard
+          loyaltyPoints={profile?.loyalty_points || 0}
+          vipTier={profile?.vip_tier || 'Member'}
+          userName={profile?.name || firstName}
+        />
+      </div>
+
+      {/* 4. Skin Tone & Color Theory Analysis Hub */}
+      <div className="mt-3 px-4">
+        <ColorAnalysisCard initialProfile={profile?.color_profile || null} />
       </div>
 
       {/* My Avellin Account */}
-      <div className="mt-2 bg-white">
-        <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">My Avellin Account</h2>
+      <div className="mt-4 bg-white">
+        <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">
+          My Avellin Account & Bespoke Hub
+        </h2>
+        <MenuItem href="/profile/size-passport" icon={Ruler} label="Size Passport (Bespoke Hub)" />
         <MenuItem href="/profile/orders" icon={Package} label="Orders" />
         <MenuItem href="/profile/inbox" icon={Inbox} label="Inbox" />
         <MenuItem href="/profile/saved" icon={Heart} label="Saved Items" />

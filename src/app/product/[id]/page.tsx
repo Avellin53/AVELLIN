@@ -74,10 +74,20 @@ export default async function ProductPage({
     console.error('Error fetching reviews:', err);
   }
 
-  // 4. Current user session check
+  // 4. Current user session and size passport check
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  let userProfile: any = null;
+  if (user) {
+    const { data: pData } = await supabase
+      .from('profiles')
+      .select('id, email, name, size_passport')
+      .eq('id', user.id)
+      .maybeSingle();
+    userProfile = pData;
+  }
 
   return (
     <ProductDetailClient
@@ -85,6 +95,7 @@ export default async function ProductPage({
       vendor={vendor}
       initialReviews={initialReviews}
       currentUser={user ? { id: user.id, email: user.email } : null}
+      sizePassport={userProfile?.size_passport || null}
     />
   );
 }

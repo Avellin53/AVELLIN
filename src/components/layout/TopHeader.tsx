@@ -5,6 +5,7 @@ import { Bell, Search, Camera, ShoppingCart, ChevronLeft, Sparkles } from 'lucid
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 import { useCartStore } from '@/store/cartStore';
+import { useLensStore } from '@/store/lensStore';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import ProductCard from '@/components/product/ProductCard';
@@ -24,14 +25,11 @@ export default function TopHeader() {
     setMounted(true);
   }, []);
   
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [lensResults, setLensResults] = useState<any[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const pathname = usePathname();
   const router = useRouter();
   const showBack = pathname !== '/home' && pathname !== '/';
-  
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 40) {
@@ -63,17 +61,68 @@ export default function TopHeader() {
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setIsAnalyzing(true);
-      setLensResults(null);
-      setTimeout(async () => {
-        const supabase = createClient();
-        const { data } = await supabase.from('products').select('*, vendor:vendors(name, isVerified)').limit(4);
-        setLensResults(data || []);
+  const {
+    isAnalyzing,
+    statusMessage,
+    lensResults,
+    keywords,
+    setIsAnalyzing,
+    setLensResults,
+    clearLensSearch,
+  } = useLensStore();
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input value so the same file can be re-selected if desired
+    e.target.value = '';
+
+    // Convert file to Base64 data URL
+    setIsAnalyzing(true, 'Ms. Ave is analyzing your photo...');
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      try {
+        const base64String = reader.result as string;
+
+        const res = await fetch('/api/lens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64String }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Visual search failed');
+        }
+
+        const data = await res.json();
+        const products = data.products || [];
+        setLensResults(products, data.extractedKeywords || []);
+
+        if (products.length > 0) {
+          toast.success(
+            `Found ${products.length} item${products.length > 1 ? 's' : ''} matching "${data.keywords}"`
+          );
+        } else {
+          toast('No exact matches found', {
+            description: `Gemini extracted: "${data.keywords}". Try another angle or product!`,
+          });
+        }
+      } catch (err: any) {
+        console.error('Lens search error:', err);
         setIsAnalyzing(false);
-      }, 3000);
-    }
+        toast.error(err.message || 'Error analyzing photo. Please try again.');
+      }
+    };
+
+    reader.onerror = () => {
+      setIsAnalyzing(false);
+      toast.error('Failed to read image file');
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -129,23 +178,37 @@ export default function TopHeader() {
             </button>
           </div>
 
-          {/* Lens Results UI */}
+          {/* Lens Analyzing Loading UI */}
           {isAnalyzing && (
-            <div className="flex flex-col items-center justify-center py-10 mt-4 bg-white rounded-2xl shadow-sm border border-linen-border">
-              <Sparkles size={32} className="text-terracotta animate-pulse mb-3" />
-              <p className="text-sm font-bold text-charcoal">Analyzing image for related styles...</p>
+            <div className="flex flex-col items-center justify-center py-8 mt-4 bg-white/95 rounded-2xl shadow-sm border border-linen-border text-center px-4">
+              <Sparkles size={30} className="text-terracotta animate-pulse mb-2.5" />
+              <p className="text-sm font-bold text-charcoal">{statusMessage}</p>
+              <p className="text-[11px] text-warmgrey mt-1">Google Gemini Vision is extracting African luxury fashion tags...</p>
             </div>
           )}
 
+          {/* Lens Results Dropdown Header preview */}
           {!isAnalyzing && lensResults && (
-            <div className="mt-6 bg-white rounded-2xl shadow-sm border border-linen-border p-4 max-h-[60vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4 px-2">
-                <p className="text-sm font-medium text-emerald-600">Successfully found {lensResults.length} products related to your search.</p>
-                <button onClick={() => setLensResults(null)} className="flex-shrink-0 text-xs font-bold text-neutral-500 hover:text-charcoal underline">
+            <div className="mt-4 bg-white rounded-2xl shadow-md border border-linen-border p-4 max-h-[55vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-3 px-1 pb-2 border-b border-linen-border">
+                <div>
+                  <p className="text-xs font-bold text-emerald-600">
+                    Found {lensResults.length} Visual Lens match{lensResults.length === 1 ? '' : 'es'}
+                  </p>
+                  {keywords && keywords.length > 0 && (
+                    <p className="text-[10px] text-warmgrey capitalize">
+                      Tags: {keywords.join(' • ')}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={clearLensSearch}
+                  className="text-xs font-bold text-terracotta hover:underline px-2 py-1 rounded-lg hover:bg-terracotta/5"
+                >
                   Clear Search
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 {lensResults.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
