@@ -18,7 +18,7 @@ export default function TopHeader() {
   
   const [mounted, setMounted] = useState(false);
   const cartItems = useCartStore((state) => state.cartItems || []);
-  const cartCount = useCartStore((state) => state.cartCount());
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
     setMounted(true);
@@ -96,11 +96,11 @@ export default function TopHeader() {
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <Link href="/cart" className="relative p-2 rounded-full hover:bg-black/5 transition">
+              <Link href="/cart" className="relative p-2 rounded-full hover:bg-black/5 transition" aria-label="Shopping Cart">
                 <ShoppingCart size={20} className="text-charcoal" />
-                {mounted && cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
-                    {cartItems.length}
+                {mounted && totalItems > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white shadow-sm">
+                    {totalItems}
                   </span>
                 )}
               </Link>

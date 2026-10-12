@@ -7,6 +7,8 @@ import { ArrowRight, UserCheck, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
+import { trackFailedLogin, trackSuccessfulLogin } from '@/app/actions/auth';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +30,9 @@ export default function LoginPage() {
     });
     
     if (error) {
+      // Track failed attempt for brute-force alerting
+      await trackFailedLogin(email);
+
       if (error.message.includes('Email not confirmed')) {
         setError('unverified');
       } else {
@@ -37,6 +42,9 @@ export default function LoginPage() {
       return;
     }
     
+    // Clear failed attempts on successful login
+    await trackSuccessfulLogin(email);
+
     // Check for Admin
     toast.success('Welcome back to AVELLIN!');
     if (data.user.email === 'fortuneonyeagwaziam@gmail.com') {

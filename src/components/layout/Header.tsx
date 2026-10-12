@@ -9,6 +9,7 @@ import TopHeader from './TopHeader';
 export default function Header() {
   const [mounted, setMounted] = useState(false);
   const cartItems = useCartStore((state) => state.cartItems || []);
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
     setMounted(true);

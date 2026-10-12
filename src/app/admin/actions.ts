@@ -3,6 +3,14 @@
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  )
+}
+
 export async function createVendor(formData: FormData) {
   const brandName = formData.get('brandName') as string
   const email = formData.get('email') as string
@@ -12,10 +20,7 @@ export async function createVendor(formData: FormData) {
     return { error: 'All fields are required' }
   }
 
-  const adminDb = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const adminDb = getAdminClient()
 
   // 1. Create auth user safely via admin API to avoid logging the current admin out
   const { data, error: authError } = await adminDb.auth.admin.createUser({
@@ -42,3 +47,67 @@ export async function createVendor(formData: FormData) {
   revalidatePath('/admin')
   return { success: true }
 }
+
+export async function deleteProductAction(productId: string) {
+  try {
+    const adminDb = getAdminClient()
+    const { error } = await adminDb.from('products').delete().eq('id', productId)
+    if (error) {
+      console.error('Admin delete product error:', error)
+      return { error: error.message }
+    }
+    revalidatePath('/admin')
+    return { success: true }
+  } catch (err: any) {
+    console.error('Admin delete product exception:', err)
+    return { error: err.message || 'Failed to delete product' }
+  }
+}
+
+export async function updateProductAction(
+  productId: string,
+  updates: { title: string; price: number }
+) {
+  try {
+    const adminDb = getAdminClient()
+    const { error } = await adminDb
+      .from('products')
+      .update({
+        title: updates.title,
+        price: updates.price,
+      })
+      .eq('id', productId)
+
+    if (error) {
+      console.error('Admin update product error:', error)
+      return { error: error.message }
+    }
+    revalidatePath('/admin')
+    return { success: true }
+  } catch (err: any) {
+    console.error('Admin update product exception:', err)
+    return { error: err.message || 'Failed to update product' }
+  }
+}
+
+export async function resolveSecurityAlert(alertId: string) {
+  try {
+    const adminDb = getAdminClient()
+    const { error } = await adminDb
+      .from('security_logs')
+      .update({ status: 'resolved' })
+      .eq('id', alertId)
+
+    if (error) {
+      console.error('Failed to resolve security alert:', error.message)
+      return { error: error.message }
+    }
+
+    revalidatePath('/admin')
+    return { success: true }
+  } catch (err: any) {
+    console.error('Exception resolving security alert:', err)
+    return { error: err.message || 'Failed to resolve alert' }
+  }
+}
+

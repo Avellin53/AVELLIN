@@ -29,15 +29,62 @@ export default async function ProductPage({
     }
   );
 
-  const { data: product, error } = await supabase
+  // 1. Fetch product data
+  const { data: product, error: productError } = await supabase
     .from('products')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (error || !product) {
+  if (productError || !product) {
     return notFound();
   }
 
-  return <ProductDetailClient product={product} />;
+  // 2. Fetch vendor details if vendor_id exists
+  let vendor: any = null;
+  if (product.vendor_id) {
+    const { data: vendorData } = await supabase
+      .from('profiles')
+      .select('id, name, email, phone')
+      .eq('id', product.vendor_id)
+      .maybeSingle();
+    vendor = vendorData;
+  }
+
+  // 3. Fetch reviews
+  let initialReviews: any[] = [];
+  try {
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from('reviews')
+      .select('*, profiles(name)')
+      .eq('product_id', id)
+      .order('created_at', { ascending: false });
+
+    if (!reviewsError && reviewsData) {
+      initialReviews = reviewsData;
+    } else {
+      const { data: fallbackReviews } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('product_id', id)
+        .order('created_at', { ascending: false });
+      initialReviews = fallbackReviews || [];
+    }
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+  }
+
+  // 4. Current user session check
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return (
+    <ProductDetailClient
+      product={product}
+      vendor={vendor}
+      initialReviews={initialReviews}
+      currentUser={user ? { id: user.id, email: user.email } : null}
+    />
+  );
 }
