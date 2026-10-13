@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Flame, ShoppingCart, Sparkles } from 'lucide-react';
 import CountdownTimer from '@/components/ui/CountdownTimer';
 import { useCartStore } from '@/store/cartStore';
@@ -38,7 +39,7 @@ export default function OwambeDropsSection({ products }: { products: any[] }) {
 
       {/* Horizontal Scrollable Carousel */}
       <div className="flex gap-4 overflow-x-auto scrollbar-none px-4 pb-2 pt-1">
-        {products.map((item) => {
+        {products.map((item, index) => {
           const isEnded = item.flash_sale_end
             ? new Date(item.flash_sale_end).getTime() <= Date.now()
             : false;
@@ -59,13 +60,16 @@ export default function OwambeDropsSection({ products }: { products: any[] }) {
               key={item.id}
               className="w-[260px] flex-shrink-0 bg-white rounded-3xl p-3 border border-red-100 shadow-md relative flex flex-col justify-between group"
             >
-              {/* Product Visual */}
+              {/* Product Visual using Next.js Image */}
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-100 mb-2.5">
                 {item.image_url ? (
-                  <img
+                  <Image
                     src={item.image_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    alt={item.title || 'Flash Sale Item'}
+                    fill
+                    sizes="260px"
+                    priority={index < 2}
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-xs text-neutral-400">

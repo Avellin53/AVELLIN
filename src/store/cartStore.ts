@@ -33,17 +33,18 @@ export const useCartStore = create<CartState>()(
       cartItems: [],
       items: [],
       addToCart: (product: Product) => {
+        if (!product || !product.id) return;
         set((state) => {
-          const currentItems = state.cartItems || [];
+          const currentItems = Array.isArray(state?.cartItems) ? state.cartItems : [];
           const existingIndex = currentItems.findIndex(
-            (item) => item.product.id === product.id
+            (item) => item?.product?.id === product.id
           );
 
           let updatedItems: CartItem[];
           if (existingIndex > -1) {
             updatedItems = currentItems.map((item, index) =>
               index === existingIndex
-                ? { ...item, quantity: item.quantity + 1 }
+                ? { ...item, quantity: (item.quantity || 1) + 1 }
                 : item
             );
           } else {
@@ -58,8 +59,9 @@ export const useCartStore = create<CartState>()(
       },
       removeFromCart: (productId: string) => {
         set((state) => {
-          const updatedItems = (state.cartItems || []).filter(
-            (item) => item.product.id !== productId
+          const currentItems = Array.isArray(state?.cartItems) ? state.cartItems : [];
+          const updatedItems = currentItems.filter(
+            (item) => item?.product?.id !== productId
           );
           return {
             cartItems: updatedItems,
@@ -69,17 +71,18 @@ export const useCartStore = create<CartState>()(
       },
       updateQuantity: (productId: string, quantity: number) => {
         set((state) => {
+          const currentItems = Array.isArray(state?.cartItems) ? state.cartItems : [];
           if (quantity <= 0) {
-            const updatedItems = (state.cartItems || []).filter(
-              (item) => item.product.id !== productId
+            const updatedItems = currentItems.filter(
+              (item) => item?.product?.id !== productId
             );
             return {
               cartItems: updatedItems,
               items: updatedItems,
             };
           }
-          const updatedItems = (state.cartItems || []).map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
+          const updatedItems = currentItems.map((item) =>
+            item?.product?.id === productId ? { ...item, quantity } : item
           );
           return {
             cartItems: updatedItems,
@@ -91,12 +94,27 @@ export const useCartStore = create<CartState>()(
         set({ cartItems: [], items: [] });
       },
       cartCount: () => {
-        const items = get().cartItems || [];
-        return items.reduce((total, item) => total + item.quantity, 0);
+        const rawItems = get()?.cartItems;
+        const items = Array.isArray(rawItems) ? rawItems : [];
+        return items.reduce((total, item) => total + (item?.quantity || 0), 0);
       },
     }),
     {
       name: 'avellin_cart_storage',
+      merge: (persistedState: any, currentState) => {
+        const persistedItems = Array.isArray(persistedState?.cartItems)
+          ? persistedState.cartItems.filter((i: any) => i && i.product)
+          : Array.isArray(persistedState?.items)
+          ? persistedState.items.filter((i: any) => i && i.product)
+          : [];
+
+        return {
+          ...currentState,
+          ...(persistedState || {}),
+          cartItems: persistedItems,
+          items: persistedItems,
+        };
+      },
     }
   )
 );

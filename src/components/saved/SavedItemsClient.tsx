@@ -70,13 +70,13 @@ export default function SavedItemsClient() {
               No saved luxury pieces yet
             </h2>
             <p className="text-xs text-warmgrey max-w-xs mb-6 leading-relaxed">
-              Explore verified ateliers, bookmark your bespoke dream silhouettes, and curate your personalized collection.
+              Explore verified vendors, bookmark your custom-fit dream silhouettes, and curate your personalized collection.
             </p>
             <Link
               href="/"
               className="px-6 py-3 bg-terracotta text-white rounded-xl text-sm font-bold shadow-md hover:bg-terracotta-dark transition"
             >
-              Discover Atelier
+              Discover Vendors
             </Link>
           </div>
         ) : (

@@ -157,7 +157,7 @@ export default function ProductModerationTable({
           </thead>
           <tbody className="divide-y divide-neutral-100 text-xs">
             {filteredProducts.map((p) => {
-              const vendorName = p.profiles?.name || 'Verified Atelier';
+              const vendorName = p.profiles?.name || 'Verified Vendor';
 
               return (
                 <tr

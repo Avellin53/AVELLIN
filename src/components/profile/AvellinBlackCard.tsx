@@ -83,7 +83,7 @@ export default function AvellinBlackCard({
                 </div>
                 <div className="flex items-center gap-1.5 bg-neutral-800/80 p-2 rounded-xl border border-neutral-700/50 text-[11px] font-semibold text-neutral-200">
                   <CheckCircle2 size={13} className="text-amber-400 flex-shrink-0" />
-                  <span>Priority Atelier Queue</span>
+                  <span>Priority Vendor Queue</span>
                 </div>
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function AvellinBlackCard({
                   Avellin Rewards • {vipTier}
                 </h3>
                 <p className="text-[11px] text-warmgrey">
-                  Earn points on bespoke tailoring & drops
+                  Earn points on custom-fit tailoring & drops
                 </p>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function AvellinBlackCard({
             <div className="flex items-center gap-2">
               <Gift size={16} className="text-terracotta" />
               <span className="font-medium text-neutral-700">
-                Unlock <strong className="font-extrabold text-neutral-900">Free GIGL Delivery</strong> & Bespoke Priority at 10,000 points.
+                Unlock <strong className="font-extrabold text-neutral-900">Free GIGL Delivery</strong> & Custom-Fit Priority at 10,000 points.
               </span>
             </div>
           </div>

@@ -249,7 +249,7 @@ export default async function AdminPage() {
             <p className="text-4xl font-extrabold text-neutral-900">
               {vendorCount || 0}
             </p>
-            <p className="text-[11px] text-neutral-400 mt-1">Verified partner ateliers</p>
+            <p className="text-[11px] text-neutral-400 mt-1">Verified partner vendors</p>
           </div>
         </div>
       </div>

@@ -68,13 +68,13 @@ export default async function ProfilePage() {
       {/* My Avellin Account */}
       <div className="mt-4 bg-white">
         <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">
-          My Avellin Account & Bespoke Hub
+          My Avellin Account & Custom-Fit Hub
         </h2>
-        <MenuItem href="/profile/size-passport" icon={Ruler} label="Size Passport (Bespoke Hub)" />
+        <MenuItem href="/profile/size-passport" icon={Ruler} label="Size Passport (Custom-Fit Hub)" />
         <MenuItem href="/profile/orders" icon={Package} label="Orders" />
         <MenuItem href="/profile/inbox" icon={Inbox} label="Inbox" />
         <MenuItem href="/profile/saved" icon={Heart} label="Saved Items" />
-        <MenuItem href="/profile/following" icon={Store} label="Followed Ateliers" />
+        <MenuItem href="/profile/following" icon={Store} label="Followed Vendors" />
       </div>
 
       <div className="w-full h-2 bg-neutral-100"></div>

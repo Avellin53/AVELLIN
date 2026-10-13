@@ -1,26 +1,53 @@
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
--- 1. profiles table (Shoppers)
+-- ==============================================================================
+-- 1. profiles table (Shoppers, Vendors, Admins)
+-- ==============================================================================
 create table public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
-  full_name text,
+  name text,
+  email text,
+  phone text,
+  role text default 'shopper', -- 'shopper' | 'vendor' | 'admin'
   measurements jsonb default '{}'::jsonb,
+  size_passport jsonb default null,
+  color_profile jsonb default null,
+  loyalty_points integer default 0,
+  vip_tier text default 'Member',
+  addresses jsonb default '[]'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- RLS for profiles
 alter table public.profiles enable row level security;
 
-create policy "Users can read own profile"
+create policy "Users and shoppers can read appropriate profiles"
   on public.profiles for select
-  using ( auth.uid() = id );
+  using (
+    auth.uid() = id
+    or role = 'vendor'
+    or exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  );
+
+create policy "Users can insert own profile"
+  on public.profiles for insert
+  with check ( auth.uid() = id );
 
 create policy "Users can update own profile"
   on public.profiles for update
+  using ( auth.uid() = id )
+  with check ( auth.uid() = id );
+
+create policy "Users can delete own profile"
+  on public.profiles for delete
   using ( auth.uid() = id );
 
+-- ==============================================================================
 -- 2. vendors table (Sellers)
+-- ==============================================================================
 create table public.vendors (
   id uuid default uuid_generate_v4() primary key,
   store_name text not null,
@@ -40,14 +67,21 @@ create policy "Owners can update their vendors"
   on public.vendors for update
   using ( auth.uid() = owner_id );
 
+-- ==============================================================================
 -- 3. products table
+-- ==============================================================================
 create table public.products (
   id uuid default uuid_generate_v4() primary key,
-  vendor_id uuid references public.vendors on delete cascade not null,
+  vendor_id uuid not null,
   title text not null,
   price numeric not null,
+  category text,
   image_url text,
-  sizing_data jsonb default '{}'::jsonb,
+  description text,
+  biometrics jsonb default '{}'::jsonb,
+  stock integer default 1,
+  is_flash_sale boolean default false,
+  flash_sale_end timestamp with time zone default null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -60,21 +94,83 @@ create policy "Anyone can read products"
 
 create policy "Vendors can insert their own products"
   on public.products for insert
-  with check ( exists (
-    select 1 from public.vendors 
-    where id = vendor_id and owner_id = auth.uid()
-  ) );
+  with check (
+    vendor_id = auth.uid()
+    or exists (
+      select 1 from public.vendors v where v.id = vendor_id and v.owner_id = auth.uid()
+    )
+    or exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  );
 
 create policy "Vendors can update their own products"
   on public.products for update
-  using ( exists (
-    select 1 from public.vendors 
-    where id = vendor_id and owner_id = auth.uid()
-  ) );
+  using (
+    vendor_id = auth.uid()
+    or exists (
+      select 1 from public.vendors v where v.id = vendor_id and v.owner_id = auth.uid()
+    )
+    or exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  )
+  with check (
+    vendor_id = auth.uid()
+    or exists (
+      select 1 from public.vendors v where v.id = vendor_id and v.owner_id = auth.uid()
+    )
+    or exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  );
 
 create policy "Vendors can delete their own products"
   on public.products for delete
-  using ( exists (
-    select 1 from public.vendors 
-    where id = vendor_id and owner_id = auth.uid()
-  ) );
+  using (
+    vendor_id = auth.uid()
+    or exists (
+      select 1 from public.vendors v where v.id = vendor_id and v.owner_id = auth.uid()
+    )
+    or exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  );
+
+-- ==============================================================================
+-- 4. security_logs table
+-- ==============================================================================
+create table if not exists public.security_logs (
+  id uuid default gen_random_uuid() primary key,
+  event_type text not null,
+  details jsonb default '{}'::jsonb,
+  ip_address text,
+  status text default 'unresolved',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- RLS for security_logs
+alter table public.security_logs enable row level security;
+
+create policy "Admins can view security logs"
+  on public.security_logs for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  );
+
+create policy "Admins can update security logs"
+  on public.security_logs for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
+    )
+  );

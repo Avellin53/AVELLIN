@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useChat, Message } from 'ai/react';
 import ColorAnalysisCard from '@/components/profile/ColorAnalysisCard';
+import { toast } from 'sonner';
 
 export default function AIFitPage() {
   const router = useRouter();
@@ -40,6 +41,12 @@ export default function AIFitPage() {
   } = useChat({
     api: '/api/chat',
     initialMessages,
+    onError: (error) => {
+      console.error('AI STREAM ERROR: ', error);
+      toast.error('AI Style Plug connection issue', {
+        description: error?.message || 'Ms. Ave was unable to respond. Please check your connection or retry.',
+      });
+    },
   });
 
   useEffect(() => {
@@ -102,7 +109,7 @@ export default function AIFitPage() {
           <div>
             <h1 className="font-bold text-charcoal text-sm leading-tight">Ms. Ave</h1>
             <p className="text-[10px] text-terracotta font-bold tracking-wider uppercase">
-              AI Fashion Concierge
+              AI Style Plug
             </p>
           </div>
         </div>
@@ -128,7 +135,7 @@ export default function AIFitPage() {
             <div>
               <h2 className="text-lg font-bold text-charcoal">Hello, gorgeous!</h2>
               <p className="text-xs text-warmgrey max-w-xs mt-1">
-                I'm Ms. Ave, your personal luxury fashion concierge. Tell me about your next occasion or style vision!
+                I'm Ms. Ave, your personal luxury AI Style Plug. Tell me about your next occasion or style vision!
               </p>
             </div>
 

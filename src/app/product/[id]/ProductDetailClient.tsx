@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -110,9 +111,9 @@ export default function ProductDetailClient({
     });
   };
 
-  // Bespoke Size Passport snippet
+  // Custom-Fit Size Passport snippet
   const sizePassportSnippet = sizePassport && (sizePassport.shoulder || sizePassport.bust || sizePassport.waist || sizePassport.inseam)
-    ? `\n\nHere is my Size Passport for a bespoke fit: Shoulder: ${sizePassport.shoulder || 'N/A'}, Bust: ${sizePassport.bust || 'N/A'}, Waist: ${sizePassport.waist || 'N/A'}, Inseam: ${sizePassport.inseam || 'N/A'}.`
+    ? `\n\nHere is my Size Passport for a custom fit: Shoulder: ${sizePassport.shoulder || 'N/A'}, Bust: ${sizePassport.bust || 'N/A'}, Waist: ${sizePassport.waist || 'N/A'}, Inseam: ${sizePassport.inseam || 'N/A'}.`
     : '';
 
   // Vendor contact link computation
@@ -215,7 +216,7 @@ export default function ProductDetailClient({
       setCommentInput('');
       setRatingInput(5);
       toast.success('Review submitted successfully!', {
-        description: 'Thank you for sharing your feedback with the atelier.',
+        description: 'Thank you for sharing your feedback with the vendor.',
       });
     } catch (err: any) {
       console.error('Review submit error:', err);
@@ -233,10 +234,13 @@ export default function ProductDetailClient({
       {/* 1. Header & Image Section */}
       <div className="relative aspect-[3/4] max-h-[460px] bg-neutral-100 w-full overflow-hidden">
         {product.image_url ? (
-          <img
+          <Image
             src={product.image_url}
             alt={product.title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 420px"
+            priority
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-400">
@@ -356,7 +360,7 @@ export default function ProductDetailClient({
           </h3>
           <p className="text-sm text-neutral-600 leading-relaxed">
             {product.description ||
-              'Expertly crafted with premium bespoke textiles, blending contemporary luxury with timeless African heritage styling.'}
+              'Expertly crafted with premium custom-fit textiles, blending contemporary luxury with timeless African heritage styling.'}
           </p>
         </div>
 
@@ -364,7 +368,7 @@ export default function ProductDetailClient({
         <div className="grid grid-cols-2 gap-2 text-xs text-neutral-600">
           <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-linen-border shadow-sm">
             <Check size={16} className="text-emerald-600 flex-shrink-0" />
-            <span className="font-medium">100% Verified Atelier</span>
+            <span className="font-medium">100% Verified Vendor</span>
           </div>
           <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-linen-border shadow-sm">
             <Sparkles size={16} className="text-amber-500 flex-shrink-0" />
@@ -383,17 +387,17 @@ export default function ProductDetailClient({
               </div>
               <div>
                 <h4 className="text-xs font-bold text-charcoal">
-                  {vendor?.name || 'AVELLIN Premier Atelier'}
+                  {vendor?.name || 'AVELLIN Premier Vendor'}
                 </h4>
                 <p className="text-[11px] text-emerald-700 font-semibold">
-                  Verified Atelier • Quick response rate
+                  Verified Vendor • Quick response rate
                 </p>
               </div>
             </div>
           </div>
 
           <p className="text-xs text-neutral-500">
-            Have questions regarding bespoke tailoring, native fabric sourcing, or express dispatch? Chat directly with the atelier.
+            Have questions regarding custom-fit tailoring, native fabric sourcing, or express dispatch? Chat directly with the vendor.
           </p>
 
           {/* Secondary Message Vendor Button */}
@@ -413,7 +417,7 @@ export default function ProductDetailClient({
               className="w-full h-11 bg-neutral-800 hover:bg-black text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm"
             >
               <Mail size={16} />
-              <span>Inquire with Atelier (Email)</span>
+              <span>Inquire with Vendor (Email)</span>
             </a>
           )}
         </div>
@@ -503,7 +507,7 @@ export default function ProductDetailClient({
           <div className="space-y-4 pt-1">
             {reviews.length === 0 ? (
               <div className="py-6 text-center text-xs text-neutral-400">
-                Be the first to review this atelier masterpiece.
+                Be the first to review this handcrafted masterpiece.
               </div>
             ) : (
               reviews.map((rev) => {

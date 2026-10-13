@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useRef, use } from 'react';
+import Image from 'next/image';
 import { ArrowLeft, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/utils/supabase/client';
 
 interface Message {
   id: string;
@@ -27,10 +28,7 @@ export default function ChatPage({ params }: ChatProps) {
   const [convProductId, setConvProductId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = createClient();
 
   useEffect(() => {
     async function loadChat() {
@@ -136,9 +134,16 @@ export default function ChatPage({ params }: ChatProps) {
         </button>
         {product ? (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-neutral-100 rounded-md overflow-hidden relative border border-linen-border">
+            <div className="w-10 h-10 bg-neutral-100 rounded-md overflow-hidden relative border border-linen-border flex-shrink-0">
               {product.image_url ? (
-                <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                <Image
+                  src={product.image_url}
+                  alt={product.title}
+                  fill
+                  sizes="40px"
+                  priority
+                  className="object-cover"
+                />
               ) : null}
             </div>
             <div className="flex flex-col">

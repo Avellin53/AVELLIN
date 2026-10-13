@@ -55,8 +55,8 @@ export default function WelcomeModal() {
               <Sparkles size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-neutral-900">Ms. Ave AI Stylist</h3>
-              <p className="text-xs text-neutral-500 mt-1">Your personal fashion concierge. Ask Ms. Ave for tailored recommendations and styling advice.</p>
+              <h3 className="text-sm font-bold text-neutral-900">Ms. Ave AI Style Plug</h3>
+              <p className="text-xs text-neutral-500 mt-1">Your personal AI Style Plug. Ask Ms. Ave for tailored recommendations and styling advice.</p>
             </div>
           </div>
 
@@ -65,8 +65,8 @@ export default function WelcomeModal() {
               <Users size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-neutral-900">Verified Ateliers</h3>
-              <p className="text-xs text-neutral-500 mt-1">We meticulously vet every designer and vendor to ensure you only get premium quality.</p>
+              <h3 className="text-sm font-bold text-neutral-900">Verified Vendors</h3>
+              <p className="text-xs text-neutral-500 mt-1">We meticulously vet every vendor and brand to ensure you only get premium quality.</p>
             </div>
           </div>
 

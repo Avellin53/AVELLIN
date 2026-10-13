@@ -175,7 +175,7 @@ export default function ColorAnalysisCard({
 
           <div>
             <p className="text-[11px] font-bold text-warmgrey uppercase tracking-wider mb-2">
-              Bespoke Color Harmony Palette
+              Custom-Fit Color Harmony Palette
             </p>
             <div className="grid grid-cols-3 gap-2">
               {profile.colors?.map((colorName: string, idx: number) => {

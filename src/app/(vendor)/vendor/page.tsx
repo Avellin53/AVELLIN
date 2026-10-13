@@ -13,7 +13,7 @@ export default function VendorOverview() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-warmgrey">Avellin VENDOR</span>
             <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[9px] font-bold tracking-wider flex items-center gap-1">
               <CircleDot size={8} className="fill-green-700" />
-              Verified Atelier
+              Verified Vendor
             </span>
           </div>
           <div className="flex items-center gap-3">

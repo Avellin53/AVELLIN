@@ -1,12 +1,14 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 export function createClient() {
-  // Explicitly assign to variables to force Next.js to bundle them
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    'placeholder-anon-key'
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("FATAL: Missing Supabase environment variables on the client.")
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)) {
+    console.warn("Warning: Missing Supabase environment variables on client.")
   }
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey)

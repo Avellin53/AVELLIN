@@ -13,7 +13,7 @@ export default function ShareButton({ vendorName }: { vendorName: string }) {
     const currentUrl = window.location.href;
     const shareData = {
       title: `${vendorName} on AVELLIN`,
-      text: `Explore exclusive handcrafted luxury and bespoke collections from ${vendorName} on AVELLIN.`,
+      text: `Explore exclusive handcrafted luxury and custom-fit collections from ${vendorName} on AVELLIN.`,
       url: currentUrl,
     };
 

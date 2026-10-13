@@ -58,7 +58,7 @@ export default function SizePassportClient({
       setSavedSuccess(true);
       toast.success('Size Passport saved successfully!', {
         description:
-          'Your bespoke measurements will now automatically attach when you message ateliers.',
+          'Your custom-fit measurements will now automatically attach when you message vendors.',
       });
       router.refresh();
     } catch (err: any) {
@@ -94,7 +94,7 @@ export default function SizePassportClient({
             <div>
               <h1 className="text-base font-extrabold text-charcoal">Size Passport</h1>
               <p className="text-[10px] text-warmgrey uppercase tracking-wider font-bold">
-                Bespoke Measurement Hub
+                Custom-Fit Measurement Hub
               </p>
             </div>
           </div>
@@ -132,15 +132,15 @@ export default function SizePassportClient({
         <div className="bg-gradient-to-br from-white to-linen-surface p-4 rounded-2xl border border-linen-border shadow-xs space-y-2">
           <div className="flex items-center gap-2 text-terracotta text-xs font-bold uppercase tracking-wider">
             <Sparkles size={14} />
-            <span>African Bespoke Tailoring Standard</span>
+            <span>African Custom-Fit Tailoring Standard</span>
           </div>
           <p className="text-xs text-charcoal leading-relaxed font-medium">
-            Save your anatomical measurements once. Whenever you message a verified Nigerian or regional atelier on WhatsApp or email, AVELLIN automatically appends your exact passport for custom native fittings.
+            Save your anatomical measurements once. Whenever you message a verified Nigerian or regional vendor on WhatsApp or email, AVELLIN automatically appends your exact passport for custom native fittings.
           </p>
           {isComplete && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
               <CheckCircle2 size={13} />
-              <span>Passport Ready for Ateliers</span>
+              <span>Passport Ready for Vendors</span>
             </div>
           )}
         </div>
@@ -281,7 +281,7 @@ export default function SizePassportClient({
               Preview: Vendor WhatsApp & Email Attachment
             </p>
             <div className="p-3 bg-linen-surface rounded-xl font-mono text-[11px] text-charcoal border border-linen-border leading-relaxed">
-              "Here is my Size Passport for a bespoke fit: Shoulder: {formData.shoulder} {unit}, Bust: {formData.bust} {unit}, Waist: {formData.waist} {unit}, Inseam: {formData.inseam} {unit}, Height: {formData.height} {unit}."
+              "Here is my Size Passport for a custom fit: Shoulder: {formData.shoulder} {unit}, Bust: {formData.bust} {unit}, Waist: {formData.waist} {unit}, Inseam: {formData.inseam} {unit}, Height: {formData.height} {unit}."
             </div>
           </div>
         )}

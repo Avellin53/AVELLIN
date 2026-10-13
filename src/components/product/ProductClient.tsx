@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Share2, Heart, BadgeCheck, Sparkles, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Product } from '@/types';
 import MessageVendorButton from '@/components/product/MessageVendorButton';
 import { useCartStore } from '@/store/cartStore';
@@ -23,7 +24,16 @@ export default function ProductClient({ product, crossSell }: { product: Product
     <div className="flex flex-col min-h-screen bg-linen relative pb-32">
       {/* 1. Hero Image & Floating Controls */}
       <div className="aspect-[3/4] bg-[#EDE7DC] relative w-full">
-        {(product as any).image_url && <img src={(product as any).image_url} alt={product.title} className="absolute inset-0 w-full h-full object-cover" />}
+        {(product as any).image_url && (
+          <Image
+            src={(product as any).image_url}
+            alt={product.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 420px"
+            priority
+            className="object-cover"
+          />
+        )}
         <div className="absolute top-4 left-4 right-4 flex justify-between z-10">
           <Link href="/" className="bg-white/75 backdrop-blur-md text-charcoal rounded-full p-2.5 shadow-sm hover:bg-white transition">
             <ArrowLeft size={20} />

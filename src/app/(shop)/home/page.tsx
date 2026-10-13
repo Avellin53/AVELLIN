@@ -1,22 +1,17 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import HomeFeedClient from './HomeFeedClient';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
-export default async function HomePage() {
+async function MainProductFeed() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { cookies: { getAll() { return cookieStore.getAll() } } }
   );
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-    if (profile?.role === 'vendor') redirect('/vendor/dashboard');
-  }
 
   const { data: products } = await supabase
     .from('products')
@@ -44,5 +39,26 @@ export default async function HomePage() {
       initialProducts={products || []}
       flashSaleProducts={flashSaleProducts}
     />
+  );
+}
+
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll() { return cookieStore.getAll() } } }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    if (profile?.role === 'vendor') redirect('/vendor/dashboard');
+  }
+
+  return (
+    <Suspense fallback={<LoadingSpinner size="lg" className="min-h-[50vh]" />}>
+      <MainProductFeed />
+    </Suspense>
   );
 }

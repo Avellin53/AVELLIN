@@ -1,17 +1,105 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from 'sonner';
 
-export default function CartPage() {
+// Reusable Empty Cart UI
+function EmptyCartUI() {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-20 h-20 bg-linen-surface rounded-full flex items-center justify-center mb-4 text-warmgrey border border-linen-border">
+        <ShoppingBag size={36} strokeWidth={1.5} />
+      </div>
+      <h2 className="text-lg font-bold text-charcoal mb-1">
+        Your cart is empty
+      </h2>
+      <p className="text-xs text-warmgrey max-w-xs mb-6">
+        Looks like you haven't added any luxury pieces yet. Explore our curated collections to get started.
+      </p>
+      <Link
+        href="/home"
+        className="px-6 py-3 bg-terracotta text-white rounded-xl text-sm font-bold shadow-md hover:bg-terracotta-dark transition"
+      >
+        Start Shopping
+      </Link>
+    </div>
+  );
+}
+
+// React Error Boundary Class for the Cart Page
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class CartErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('CartErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col min-h-screen items-center justify-center bg-linen px-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 border border-red-200">
+            <AlertCircle size={32} />
+          </div>
+          <h2 className="text-lg font-bold text-charcoal mb-1">Cart Temporarily Unavailable</h2>
+          <p className="text-xs text-warmgrey max-w-xs mb-6 leading-relaxed">
+            We encountered an unexpected error while preparing your cart. Please try again or return to the shop.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-4 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-black transition"
+            >
+              <RefreshCw size={14} />
+              <span>Retry</span>
+            </button>
+            <Link
+              href="/home"
+              className="px-4 py-2.5 bg-terracotta text-white rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-terracotta-dark transition"
+            >
+              <ShoppingBag size={14} />
+              <span>Continue Shopping</span>
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function CartContent() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
-  const cartItems = useCartStore((state) => state.cartItems || []);
+  // Ensure cartItems is always initialized as an array, never undefined or null
+  const rawCartItems = useCartStore((state) => state?.cartItems);
+  const cartItems = Array.isArray(rawCartItems)
+    ? rawCartItems.filter((item) => item && item.product)
+    : [];
+
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
   const clearCart = useCartStore((state) => state.clearCart);
@@ -19,6 +107,9 @@ export default function CartPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const [tipAmount, setTipAmount] = useState<number>(0);
+  const [customTip, setCustomTip] = useState<string>('');
 
   if (!mounted) {
     return (
@@ -28,11 +119,8 @@ export default function CartPage() {
     );
   }
 
-  const [tipAmount, setTipAmount] = useState<number>(0);
-  const [customTip, setCustomTip] = useState<string>('');
-
   const subtotal = cartItems.reduce(
-    (total, item) => total + (item.product.price || 0) * item.quantity,
+    (total, item) => total + (item?.product?.price || 0) * (item?.quantity || 1),
     0
   );
 
@@ -50,9 +138,9 @@ export default function CartPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-base font-bold text-charcoal">
-          Shopping Cart ({cartItems.length})
+          Shopping Cart ({cartItems?.length || 0})
         </h1>
-        {cartItems.length > 0 ? (
+        {cartItems && cartItems.length > 0 ? (
           <button
             onClick={() => {
               clearCart();
@@ -68,45 +156,31 @@ export default function CartPage() {
       </div>
 
       <div className="max-w-[420px] mx-auto w-full px-4 pt-4 flex-1 flex flex-col">
-        {cartItems.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 bg-linen-surface rounded-full flex items-center justify-center mb-4 text-warmgrey border border-linen-border">
-              <ShoppingBag size={36} strokeWidth={1.5} />
-            </div>
-            <h2 className="text-lg font-bold text-charcoal mb-1">
-              Your cart is empty
-            </h2>
-            <p className="text-xs text-warmgrey max-w-xs mb-6">
-              Looks like you haven't added any luxury pieces yet. Explore our curated collections to get started.
-            </p>
-            <Link
-              href="/home"
-              className="px-6 py-3 bg-terracotta text-white rounded-xl text-sm font-bold shadow-md hover:bg-terracotta-dark transition"
-            >
-              Start Shopping
-            </Link>
-          </div>
-        ) : (
+        {/* Strict null checks before mapping over cart items: cartItems?.length > 0 ? cartItems.map(...) : <EmptyCartUI /> */}
+        {cartItems && cartItems.length > 0 ? (
           <div className="space-y-4">
             {/* Cart Items List */}
             <div className="space-y-3">
               {cartItems.map((item) => {
-                const itemTotal = (item.product.price || 0) * item.quantity;
+                const itemTotal = (item?.product?.price || 0) * (item?.quantity || 1);
                 return (
                   <div
-                    key={item.product.id}
+                    key={item?.product?.id}
                     className="bg-white rounded-2xl p-3.5 border border-linen-border shadow-sm flex gap-3.5 items-center"
                   >
-                    {/* Thumbnail */}
+                    {/* Thumbnail using Next.js Image */}
                     <Link
-                      href={`/product/${item.product.id}`}
+                      href={`/product/${item?.product?.id}`}
                       className="w-20 h-24 bg-neutral-100 rounded-xl overflow-hidden flex-shrink-0 relative"
                     >
-                      {item.product.image_url ? (
-                        <img
+                      {item?.product?.image_url ? (
+                        <Image
                           src={item.product.image_url}
-                          alt={item.product.title}
-                          className="w-full h-full object-cover"
+                          alt={item.product.title || 'Product'}
+                          fill
+                          sizes="80px"
+                          priority
+                          className="object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-xs text-neutral-400">
@@ -120,10 +194,10 @@ export default function CartPage() {
                       <div>
                         <div className="flex justify-between items-start gap-2">
                           <Link
-                            href={`/product/${item.product.id}`}
+                            href={`/product/${item?.product?.id}`}
                             className="text-sm font-bold text-charcoal line-clamp-1 hover:text-terracotta transition"
                           >
-                            {item.product.title}
+                            {item?.product?.title}
                           </Link>
                           <button
                             onClick={() => {
@@ -136,7 +210,7 @@ export default function CartPage() {
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        {item.product.category && (
+                        {item?.product?.category && (
                           <span className="text-[10px] uppercase font-bold tracking-wider text-warmgrey">
                             {item.product.category}
                           </span>
@@ -152,7 +226,7 @@ export default function CartPage() {
                         <div className="flex items-center bg-linen-surface border border-linen-border rounded-lg">
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity - 1)
+                              updateQuantity(item.product.id, (item.quantity || 1) - 1)
                             }
                             className="p-1.5 text-charcoal hover:bg-neutral-200 rounded-l-lg transition"
                             aria-label="Decrease quantity"
@@ -164,7 +238,7 @@ export default function CartPage() {
                           </span>
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity + 1)
+                              updateQuantity(item.product.id, (item.quantity || 1) + 1)
                             }
                             className="p-1.5 text-charcoal hover:bg-neutral-200 rounded-r-lg transition"
                             aria-label="Increase quantity"
@@ -205,7 +279,7 @@ export default function CartPage() {
                 )}
               </div>
               <p className="text-[11px] text-warmgrey leading-relaxed">
-                100% of your tip goes directly to the Nigerian weavers, tailors, and artisans crafting your bespoke piece.
+                100% of your tip goes directly to the Nigerian weavers, tailors, and artisans crafting your custom-fit piece.
               </p>
 
               {/* Quick Select Tip Chips */}
@@ -311,8 +385,18 @@ export default function CartPage() {
               <ArrowRight size={18} />
             </button>
           </div>
+        ) : (
+          <EmptyCartUI />
         )}
       </div>
     </div>
+  );
+}
+
+export default function CartPage() {
+  return (
+    <CartErrorBoundary>
+      <CartContent />
+    </CartErrorBoundary>
   );
 }

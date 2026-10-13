@@ -61,8 +61,12 @@ export default function HomeFeedClient({
 
         {lensResults.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
-            {lensResults.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+            {lensResults.map((product: any, index: number) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                priority={index < 4}
+              />
             ))}
           </div>
         ) : (
@@ -99,8 +103,12 @@ export default function HomeFeedClient({
 
       {initialProducts && initialProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
-          {initialProducts.map((product: any) => (
-            <ProductCard key={product.id} product={product} />
+          {initialProducts.map((product: any, index: number) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              priority={index < 4}
+            />
           ))}
         </div>
       ) : (
