@@ -11,9 +11,11 @@ import {
   ExternalLink,
   ShieldCheck,
   RefreshCw,
+  Ban // Import the Ban icon for the block button
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { resolveSecurityAlert } from './actions';
+// Assuming your server action can handle custom statuses, or we just resolve it to clear it
+import { resolveSecurityAlert } from './actions'; 
 
 export interface SecurityAlert {
   id: string;
@@ -30,24 +32,51 @@ export default function SecurityAlertsTable({
   initialAlerts: SecurityAlert[];
 }) {
   const [alerts, setAlerts] = useState<SecurityAlert[]>(initialAlerts);
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const handleResolve = async (id: string, eventType: string) => {
-    setResolvingId(id);
+  const handleAction = async (id: string, eventType: string, action: 'resolved' | 'blocked', ip: string) => {
+    setProcessingId(id);
     try {
-      const res = await resolveSecurityAlert(id);
+      // Clear it from the database using your existing server action
+      const res = await resolveSecurityAlert(id); 
+      
       if (res.error) {
-        toast.error(`Failed to resolve alert: ${res.error}`);
+        toast.error(`Failed to process alert: ${res.error}`);
       } else {
+        // Remove from UI
         setAlerts((prev) => prev.filter((a) => a.id !== id));
-        toast.success(`Security threat resolved: ${eventType}`, {
-          description: 'The incident has been marked as resolved in security logs.',
-        });
+        
+        if (action === 'blocked') {
+           toast.error(`IP Blocked: ${ip}`, {
+             description: 'Alert cleared. Please add this IP to your Vercel Firewall to enforce the ban.',
+             duration: 10000 // Keep it on screen longer so you can copy the IP
+           });
+        } else {
+           toast.success(`Security threat resolved: ${eventType}`, {
+             description: 'The incident has been marked as resolved.',
+           });
+        }
       }
     } catch (err) {
-      toast.error('Unexpected error while resolving alert');
+      toast.error('Unexpected error while processing alert');
     } finally {
-      setResolvingId(null);
+      setProcessingId(null);
+    }
+  };
+
+  // Helper function for detailed descriptions
+  const getAttackDescription = (eventType: string) => {
+    switch(eventType) {
+      case 'DDOS_ATTEMPT': 
+        return "High-frequency request flooding designed to exhaust server resources.";
+      case 'SQL_INJECTION': 
+        return "Malicious payload attempting to manipulate or expose database records.";
+      case 'DIRECTORY_TRAVERSAL': 
+        return "Attempted unauthorized access to hidden server files and directories.";
+      case 'BRUTE_FORCE': 
+        return "Repeated automated guessing of login credentials.";
+      default: 
+        return "Suspicious network activity detected.";
     }
   };
 
@@ -74,6 +103,13 @@ export default function SecurityAlertsTable({
             UNAUTHORIZED ACCESS
           </span>
         );
+      case 'DDOS_ATTEMPT':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-red-600 text-white shadow-sm animate-pulse">
+            <ShieldAlert size={12} />
+            DDOS ATTEMPT
+          </span>
+        );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-neutral-100 text-neutral-800 border border-neutral-300 shadow-sm">
@@ -84,52 +120,60 @@ export default function SecurityAlertsTable({
     }
   };
 
-  const renderDetailsSummary = (details: any) => {
-    if (!details) return <span className="text-neutral-400 italic">No details available</span>;
-
-    if (typeof details === 'string') {
-      return <p className="text-xs text-neutral-700 font-mono break-all">{details}</p>;
-    }
-
+  const renderDetailsSummary = (details: any, eventType: string) => {
     return (
-      <div className="space-y-1 text-xs">
-        {details.target_email && (
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-neutral-500 uppercase text-[10px]">Email:</span>
-            <span className="font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded text-[11px]">
-              {details.target_email}
-            </span>
-          </div>
-        )}
-        {details.matched_pattern && (
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-neutral-500 uppercase text-[10px]">Pattern:</span>
-            <span className="font-bold text-red-600 text-[11px]">{details.matched_pattern}</span>
-          </div>
-        )}
-        {details.target_url && (
-          <div className="text-[11px] font-mono text-neutral-600 truncate max-w-sm" title={details.target_url}>
-            <span className="font-bold text-neutral-500 uppercase text-[10px] mr-1">URL:</span>
-            {details.target_url}
-          </div>
-        )}
-        {details.reason && (
-          <p className="text-[11px] text-neutral-600 font-medium">
-            {details.reason}
-          </p>
-        )}
-        {details.consecutive_failed_attempts && (
-          <span className="inline-block text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md mt-1">
-            {details.consecutive_failed_attempts} Consecutive Failures
-          </span>
-        )}
+      <div className="space-y-2">
+        {/* Inject the dynamic description at the top of the details */}
+        <p className="text-[12px] font-bold text-neutral-800">
+           {getAttackDescription(eventType)}
+        </p>
+
+        {/* Existing details rendering */}
+        {(() => {
+          if (!details) return <span className="text-neutral-400 italic text-xs">No extra details available</span>;
+          if (typeof details === 'string') return <p className="text-xs text-neutral-700 font-mono break-all">{details}</p>;
+
+          return (
+            <div className="space-y-1 text-xs">
+              {details.target_email && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="font-bold text-neutral-500 uppercase text-[10px]">Email:</span>
+                  <span className="font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded text-[11px]">
+                    {details.target_email}
+                  </span>
+                </div>
+              )}
+              {details.matched_pattern && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="font-bold text-neutral-500 uppercase text-[10px]">Pattern:</span>
+                  <span className="font-bold text-red-600 text-[11px]">{details.matched_pattern}</span>
+                </div>
+              )}
+              {details.target_url && (
+                <div className="text-[11px] font-mono text-neutral-600 truncate max-w-[200px] mt-1" title={details.target_url}>
+                  <span className="font-bold text-neutral-500 uppercase text-[10px] mr-1">URL:</span>
+                  {details.target_url}
+                </div>
+              )}
+              {details.reason && (
+                <p className="text-[11px] text-neutral-600 font-medium mt-1">
+                  {details.reason}
+                </p>
+              )}
+              {details.consecutive_failed_attempts && (
+                <span className="inline-block text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md mt-1">
+                  {details.consecutive_failed_attempts} Consecutive Failures
+                </span>
+              )}
+            </div>
+          );
+        })()}
       </div>
     );
   };
 
   return (
     <div className="bg-white rounded-3xl border border-red-200 shadow-md overflow-hidden relative">
-      {/* High-Contrast Header Bar */}
       <div className="px-6 py-5 bg-gradient-to-r from-red-50 via-orange-50 to-amber-50 border-b border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-red-500 text-white flex items-center justify-center shadow-md animate-bounce">
@@ -159,7 +203,6 @@ export default function SecurityAlertsTable({
         </div>
       </div>
 
-      {/* Alert Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
@@ -168,7 +211,7 @@ export default function SecurityAlertsTable({
               <th className="px-6 py-4">IP Address</th>
               <th className="px-6 py-4">Timestamp</th>
               <th className="px-6 py-4">Incident Details</th>
-              <th className="px-6 py-4 text-right">Action</th>
+              <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100 text-xs">
@@ -177,12 +220,10 @@ export default function SecurityAlertsTable({
                 key={alert.id}
                 className="hover:bg-red-50/40 transition-colors bg-white group"
               >
-                {/* Event Type */}
                 <td className="px-6 py-4 align-top whitespace-nowrap">
                   {getEventBadge(alert.event_type)}
                 </td>
 
-                {/* IP Address */}
                 <td className="px-6 py-4 align-top whitespace-nowrap">
                   <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-neutral-800 bg-neutral-100 px-2 py-1 rounded-lg w-fit border border-neutral-200">
                     <Globe size={13} className="text-neutral-500" />
@@ -190,7 +231,6 @@ export default function SecurityAlertsTable({
                   </div>
                 </td>
 
-                {/* Timestamp */}
                 <td className="px-6 py-4 align-top whitespace-nowrap">
                   <div className="flex items-center gap-1.5 text-neutral-600 font-medium">
                     <Clock size={13} className="text-warmgrey" />
@@ -209,24 +249,31 @@ export default function SecurityAlertsTable({
                   </div>
                 </td>
 
-                {/* Incident Details */}
-                <td className="px-6 py-4 align-top max-w-md">
-                  {renderDetailsSummary(alert.details)}
+                <td className="px-6 py-4 align-top max-w-sm">
+                  {renderDetailsSummary(alert.details, alert.event_type)}
                 </td>
 
-                {/* The Resolve Button */}
+                {/* THE NEW DUAL ACTION BUTTONS */}
                 <td className="px-6 py-4 align-top text-right whitespace-nowrap">
-                  <button
-                    onClick={() => handleResolve(alert.id, alert.event_type)}
-                    disabled={resolvingId === alert.id}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-900 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition shadow-sm hover:shadow-md disabled:opacity-50"
-                    title="Mark alert as resolved in Supabase"
-                  >
-                    <CheckCircle2 size={14} className="text-emerald-400 group-hover:text-white" />
-                    <span>
-                      {resolvingId === alert.id ? 'Resolving...' : 'Resolve'}
-                    </span>
-                  </button>
+                  <div className="flex flex-col gap-2 items-end">
+                    <button
+                      onClick={() => handleAction(alert.id, alert.event_type, 'resolved', alert.ip_address)}
+                      disabled={processingId === alert.id}
+                      className="inline-flex justify-center items-center gap-1.5 px-4 py-2 w-[110px] bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs rounded-lg transition shadow-sm disabled:opacity-50"
+                    >
+                      <CheckCircle2 size={14} className="text-neutral-500" />
+                      <span>{processingId === alert.id ? '...' : 'Resolve'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleAction(alert.id, alert.event_type, 'blocked', alert.ip_address)}
+                      disabled={processingId === alert.id}
+                      className="inline-flex justify-center items-center gap-1.5 px-4 py-2 w-[110px] bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-lg transition shadow-sm disabled:opacity-50"
+                    >
+                      <Ban size={14} />
+                      <span>{processingId === alert.id ? '...' : 'Block IP'}</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
