@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Upgraded to support Telegram Markdown formatting
 async function sendMessage(chatId: number, text: string) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
@@ -11,7 +12,11 @@ async function sendMessage(chatId: number, text: string) {
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text: text }),
+    body: JSON.stringify({ 
+      chat_id: chatId, 
+      text: text,
+      parse_mode: 'Markdown' 
+    }),
   });
 }
 
@@ -25,7 +30,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     fallbackChatId = body?.message?.chat?.id || null;
-    // Removed verbose payload logging to prevent console spam
 
     // 1. Check if this is a Telegram Update object
     if (body.message) {
@@ -79,7 +83,7 @@ export async function POST(request: Request) {
       if (text === '/start') {
         await sendMessage(
           chatId, 
-          "Welcome to the AVELLIN Vendor Portal! 🌟\n\nPlease reply with your registered vendor email address to authenticate your account and start uploading products."
+          "Welcome to the AVELLIN Vendor Portal! 🌟\n\nPlease reply with your registered vendor email address to authenticate your account and start uploading premium wears."
         );
         return NextResponse.json({ success: true });
       } else if (text.includes('@')) {
@@ -108,12 +112,36 @@ export async function POST(request: Request) {
           if (updateError) {
             console.error("DB Update Error:", updateError);
             await sendMessage(chatId, "⚠️ Authentication failed on our end. Database could not link your Chat ID.");
-            return NextResponse.json({ success: true }); // Return 200 to prevent Telegram retries
+            return NextResponse.json({ success: true });
           }
 
-          await sendMessage(chatId, `Authentication successful, ${profile.name}! ✅\n\nYou are now linked to AVELLIN.\n\nTo upload a product, send a photo and include the details in the caption like this:\nTitle | Price | Category | Description`);
+          // THE NEW VENDOR TUTORIAL MESSAGE
+          const tutorialMessage = `
+✅ *Email Verified! Welcome to AVELLIN, ${profile.name}.* 🥂
+
+As a premium vendor, your presentation is everything. Shoppers on AVELLIN pay for quality, so here is a quick 3-step guide to uploading wears that actually sell:
+
+📸 *1. The Image (The Hook)*
+• *Lighting is everything:* Shoot in bright, natural daylight.
+• *Keep it clean:* Use a neat, uncluttered background.
+• *Show the details:* Full-body shots are great, but buyers also want close-ups of the fabric and stitching.
+
+✍️ *2. The Description & Delivery*
+• State the exact fabric type (e.g., Premium Crepe, Authentic Ankara, Polish Cotton).
+• Clearly state if it is "Ready-to-Wear" or "Custom-Fit".
+• *Delivery Rule:* Always state your dispatch/waybill timeline (e.g., "Ready for immediate dispatch" or "Takes 3-5 days to sew").
+
+💰 *3. How to Upload Right Now*
+Simply upload a photo in this chat, and type your details in the *image caption* using exactly this format (separated by the | symbol):
+
+*Title | Price | Category | Description*
+
+_Example: Red Ankara Gown | 25000 | Native | Premium quality, 3 days delivery_
+`;
+
+          await sendMessage(chatId, tutorialMessage);
         } else {
-          await sendMessage(chatId, "⚠️ Authentication failed. This email is not registered as an authorized vendor on AVELLIN.");
+          await sendMessage(chatId, "⚠️ Authentication failed. This email is not registered as an authorized vendor/brand on AVELLIN.");
         }
         
         return NextResponse.json({ success: true });
@@ -140,11 +168,11 @@ export async function POST(request: Request) {
         const parts = text.split('|').map((p: string) => p.trim());
         const title = parts[0] || 'Untitled Product';
         const rawPrice = parts[1] || '0';
-        const price = parseInt(rawPrice.replace(/[^0-9]/g, ''), 10); // Strip "naira" text
+        const price = parseInt(rawPrice.replace(/[^0-9]/g, ''), 10);
         const category = parts[2] || 'Uncategorized';
         const description = parts[3] || '';
 
-        // 3. Handle Image (Fetch real photo from Telegram and upload to Supabase Storage)
+        // 3. Handle Image
         let imageUrl = "/images/placeholder.png"; 
 
         if (message.photo && message.photo.length > 0) {
@@ -180,9 +208,6 @@ export async function POST(request: Request) {
           } catch (imgError) {
             console.error("Error processing Telegram image:", imgError);
           }
-        } else {
-          // You could choose to enforce an image here and throw an error, 
-          // but we fall back to a local placeholder instead of Unsplash.
         }
 
         // 4. Insert into Products Table
@@ -201,13 +226,13 @@ export async function POST(request: Request) {
         if (insertError) {
           console.error("DB Insert Error:", insertError);
           await sendMessage(chatId, `⚠️ Database Insert Failed: ${insertError.message}\nHint: Check your column names (title vs name, image_url vs image).`);
-          return NextResponse.json({ success: true }); // Return 200 to prevent retries
+          return NextResponse.json({ success: true });
         }
 
-        await sendMessage(chatId, `🎉 Success! **${title}** has been published live to AVELLIN.\nShoppers can now see this item.`);
+        await sendMessage(chatId, `🎉 Success! *${title}* has been published live to AVELLIN.\nShoppers can now see this item in the feed.`);
         return NextResponse.json({ success: true });
       } else {
-        await sendMessage(chatId, "I didn't quite catch that. If you are trying to authenticate, please send your registered vendor email address.");
+        await sendMessage(chatId, "I didn't quite catch that. If you are trying to authenticate, please send your registered vendor email address. If you are uploading a wear, ensure you use the | symbol to separate your details.");
         return NextResponse.json({ success: true });
       }
     }
@@ -222,14 +247,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Initialize Supabase Service Role Client
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
       { auth: { persistSession: false } }
     );
 
-    // 1. Check if a user exists in the profiles table with email === vendorEmail and role === 'vendor'
     const { data: vendorProfile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('id, role')
@@ -243,7 +266,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Database Product Insertion
     const { error: insertError } = await supabaseAdmin.from('products').insert([
       {
         title,
@@ -271,12 +293,10 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error("❌ Webhook Error:", error);
-    // Attempt to notify the user if chatId is available
     if (fallbackChatId) {
       try {
         await sendMessage(fallbackChatId, `⚠️ Fatal Server Crash: ${error.message || "Unknown error"}`);
       } catch (e) {
-         // Ignore nested errors
       }
     }
     return NextResponse.json({ success: false }, { status: 200 });
