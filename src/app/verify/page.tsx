@@ -79,8 +79,8 @@ function VerifyContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen w-full max-w-[420px] mx-auto shadow-2xl">
-      <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-linen-border relative overflow-hidden">
+    <div className="w-full min-h-[calc(100vh-6rem)] flex items-center justify-center py-6 sm:py-12">
+      <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-linen-border relative overflow-hidden">
         
         <div className="text-center mb-6 mt-2">
           <div className="w-12 h-12 bg-terracotta/10 text-terracotta rounded-full flex items-center justify-center mx-auto mb-4">
@@ -140,7 +140,7 @@ function VerifyContent() {
 
 export default function VerifyPage() {
   return (
-    <Suspense fallback={<div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen w-full max-w-[420px] mx-auto shadow-2xl"><div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-linen-border animate-pulse h-64"></div></div>}>
+    <Suspense fallback={<div className="w-full min-h-[calc(100vh-6rem)] flex items-center justify-center py-6 sm:py-12"><div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-linen-border animate-pulse h-64"></div></div>}>
       <VerifyContent />
     </Suspense>
   );

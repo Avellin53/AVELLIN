@@ -12,7 +12,7 @@ export default function Loading() {
       </div>
 
       {/* 2. Grid Skeleton */}
-      <div className="grid grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="bg-white rounded-2xl border border-linen-border p-2 flex flex-col gap-2.5 shadow-sm">
             <div className="bg-warmgrey/10 animate-pulse rounded-xl aspect-[3/4] w-full"></div>

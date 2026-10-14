@@ -4,6 +4,7 @@ export type SecurityEventType =
   | 'BRUTE_FORCE'
   | 'SUSPICIOUS_PAYLOAD'
   | 'UNAUTHORIZED_ACCESS'
+  | 'DDOS_ATTEMPT'
   | string
 
 export interface SecurityLogEntry {

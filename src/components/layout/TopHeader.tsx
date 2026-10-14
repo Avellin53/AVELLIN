@@ -130,8 +130,8 @@ export default function TopHeader() {
       {searchFocused && (
         <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm transition-opacity" onClick={() => setSearchFocused(false)}></div>
       )}
-      <header className={`fixed top-0 w-full max-w-[420px] z-50 bg-linen/95 backdrop-blur-xl border-b border-linen-border transition-all duration-300 ${scrolled ? '-translate-y-[60px]' : 'translate-y-0'}`}>
-        <div className="flex flex-col px-4 pt-4 pb-3 space-y-4 relative z-50">
+      <header className={`fixed top-0 left-0 right-0 w-full z-50 bg-linen/95 backdrop-blur-xl border-b border-linen-border transition-all duration-300 ${scrolled ? '-translate-y-[60px]' : 'translate-y-0'}`}>
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-3 flex flex-col space-y-4 relative z-50">
           
           {/* Brand Row */}
           <div className="flex items-center justify-between h-[44px]">
@@ -208,7 +208,7 @@ export default function TopHeader() {
                   Clear Search
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {lensResults.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

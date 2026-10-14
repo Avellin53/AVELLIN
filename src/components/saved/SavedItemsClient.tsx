@@ -37,7 +37,7 @@ export default function SavedItemsClient() {
   return (
     <div className="flex flex-col min-h-screen bg-linen pb-32">
       {/* Top Header */}
-      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-linen-border px-4 py-3 flex items-center justify-between max-w-[420px] mx-auto w-full">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-linen-border px-4 py-3 flex items-center justify-between w-full max-w-7xl mx-auto">
         <button
           onClick={() => router.back()}
           className="p-2 -ml-2 rounded-full hover:bg-neutral-100 transition text-charcoal"
@@ -60,7 +60,7 @@ export default function SavedItemsClient() {
         )}
       </div>
 
-      <div className="max-w-[420px] mx-auto w-full px-4 pt-4 flex-1 flex flex-col">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex-1 flex flex-col">
         {savedItems.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
             <div className="w-20 h-20 bg-linen-surface rounded-full flex items-center justify-center mb-4 text-warmgrey border border-linen-border">
@@ -87,7 +87,7 @@ export default function SavedItemsClient() {
             </div>
 
             {/* Responsive Grid matching ProductCard */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {savedItems.map((item) => (
                 <div key={item.id} className="relative group">
                   <ProductCard product={item} />

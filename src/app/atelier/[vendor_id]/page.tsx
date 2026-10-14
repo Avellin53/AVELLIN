@@ -108,7 +108,7 @@ async function VendorProductsGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {products.map((product, index) => (
         <ProductCard
           key={product.id}
@@ -166,7 +166,7 @@ export default async function VendorStorefrontPage({
   return (
     <div className="flex flex-col min-h-screen bg-linen pb-32">
       {/* Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-linen-border px-4 py-3 flex items-center justify-between max-w-[420px] md:max-w-3xl mx-auto w-full">
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-linen-border px-4 py-3 flex items-center justify-between w-full max-w-7xl mx-auto">
         <Link
           href="/"
           className="p-2 -ml-2 rounded-full hover:bg-neutral-100 transition text-charcoal flex items-center gap-1.5"
@@ -187,7 +187,7 @@ export default async function VendorStorefrontPage({
         </Link>
       </div>
 
-      <div className="max-w-[420px] md:max-w-3xl mx-auto w-full">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ======================================================== */}
         {/* TOP: Cover Photo & Vendor Banner */}
         {/* ======================================================== */}

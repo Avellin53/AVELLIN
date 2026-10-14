@@ -16,8 +16,8 @@ export default function VendorBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 max-w-[420px] w-full bg-white/95 backdrop-blur-md border-t border-linen-border px-6 pt-3 pb-7 z-40">
-      <div className="flex justify-between items-center">
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-linen-border z-40 pb-safe">
+      <div className="w-full max-w-7xl mx-auto px-6 pt-3 pb-7 flex justify-between sm:justify-around items-center">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = pathname === tab.href;

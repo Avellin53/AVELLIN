@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { checkUserExists, syncProfileAfterSignup } from '@/app/actions/auth';
-import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, ChevronLeft, Sparkles, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -137,13 +138,14 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen px-6 py-12 justify-center items-center bg-linen relative w-full max-w-[420px] mx-auto shadow-2xl">
-      <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-sm border border-linen-border relative">
-        {step > 1 && (
-          <button onClick={handleBack} className="absolute top-6 left-6 text-charcoal-secondary hover:text-charcoal transition">
-            <ChevronLeft size={20} />
-          </button>
-        )}
+    <div className="w-full min-h-[calc(100vh-6rem)] flex items-center justify-center py-6 sm:py-12">
+      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-xl border border-linen-border overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <div className="p-8 sm:p-12 lg:p-14 flex flex-col justify-center relative order-2 md:order-1">
+          {step > 1 && (
+            <button onClick={handleBack} className="absolute top-8 left-8 text-charcoal-secondary hover:text-charcoal transition">
+              <ChevronLeft size={22} />
+            </button>
+          )}
         
         <div className="text-center mb-6 mt-2">
           <h1 className="text-2xl font-bold text-charcoal">Create Account</h1>
@@ -281,6 +283,35 @@ export default function RegisterPage() {
           </div>
         )}
       </div>
+
+      {/* Fashion Visual Showcase Column */}
+      <div className="relative min-h-[280px] sm:min-h-[340px] md:min-h-full bg-neutral-900 overflow-hidden flex flex-col justify-end p-8 sm:p-10 text-white order-1 md:order-2">
+        <Image
+          src="/images/auth-fashion-hero.jpg"
+          alt="AVELLIN Haute Couture"
+          fill
+          className="object-cover object-top opacity-90 transition-transform duration-700 hover:scale-105"
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-ochre/20 rounded-full blur-3xl pointer-events-none z-10" />
+
+        <div className="relative z-20 space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-amber-200 text-[11px] font-black uppercase tracking-wider border border-white/20">
+            <ShieldCheck size={13} className="text-amber-300" />
+            <span>Bespoke Luxury Architecture</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-white font-serif">
+            Crafted for Your Silhouette
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-200/90 leading-relaxed font-light">
+            Experience luxury fashion calibrated to your precise physical proportions and African tailoring heritage.
+          </p>
+        </div>
+      </div>
+
     </div>
-  );
+  </div>
+);
 }

@@ -90,24 +90,32 @@ export async function updateProductAction(
   }
 }
 
-export async function resolveSecurityAlert(alertId: string) {
+export async function updateSecurityAlertStatus(
+  alertId: string,
+  action: 'resolved' | 'blocked'
+) {
   try {
     const adminDb = getAdminClient()
     const { error } = await adminDb
       .from('security_logs')
-      .update({ status: 'resolved' })
+      .update({ status: action })
       .eq('id', alertId)
 
     if (error) {
-      console.error('Failed to resolve security alert:', error.message)
+      console.error(`Failed to update security alert to ${action}:`, error.message)
       return { error: error.message }
     }
 
     revalidatePath('/admin')
     return { success: true }
   } catch (err: any) {
-    console.error('Exception resolving security alert:', err)
-    return { error: err.message || 'Failed to resolve alert' }
+    console.error(`Exception updating security alert to ${action}:`, err)
+    return { error: err.message || `Failed to update alert to ${action}` }
   }
 }
+
+export async function resolveSecurityAlert(alertId: string) {
+  return updateSecurityAlertStatus(alertId, 'resolved')
+}
+
 

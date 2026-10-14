@@ -114,6 +114,9 @@ export default async function AdminPage() {
     console.warn('[AdminPage] security_logs table not yet queried or empty:', err)
   }
 
+  // Active DDoS attempts count
+  const ddosAlerts = (securityAlerts || []).filter((a: any) => a.event_type === 'DDOS_ATTEMPT')
+
   // Users list for role management
   const { data: usersList } = await supabaseAdmin
     .from('profiles')
@@ -253,6 +256,35 @@ export default async function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* CRITICAL DDOS ATTACK BANNER */}
+      {/* ======================================================== */}
+      {ddosAlerts.length > 0 && (
+        <div className="mb-8 p-5 bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white rounded-3xl shadow-xl border border-red-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+              <ShieldAlert size={28} className="text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-red-700 shadow-sm">
+                  CRITICAL THREAT
+                </span>
+                <h3 className="font-extrabold text-base tracking-tight">
+                  {ddosAlerts.length} Active Layer 7 DDoS Attack{ddosAlerts.length > 1 ? 's' : ''} Blocked
+                </h3>
+              </div>
+              <p className="text-xs text-red-100 mt-1 font-medium leading-relaxed">
+                Edge rate limiting (60 req/min) mitigated high-frequency flooding. Inspect and block offending IPs in the Security Alerts tab.
+              </p>
+            </div>
+          </div>
+          <div className="text-xs font-bold text-red-100 bg-black/20 px-3.5 py-2 rounded-xl border border-white/10 self-stretch sm:self-auto text-center font-mono">
+            IPs: {Array.from(new Set(ddosAlerts.map((a: any) => a.ip_address))).join(', ') || 'N/A'}
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* ADMIN TABS: Security Alerts | Product Moderation | User Roles */}

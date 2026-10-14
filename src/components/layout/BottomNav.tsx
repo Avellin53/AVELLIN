@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Home, Compass, Sparkles, User, LayoutDashboard, Settings, PackageOpen } from 'lucide-react';
+import React from 'react';
+import { Home, Compass, Sparkles, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
 
 export default function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 w-full max-w-[420px] bg-white border-t border-linen-border z-50 pb-safe">
-      <div className="flex items-center justify-around h-[68px] px-2 pb-2">
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-linen-border z-50 pb-safe">
+      <div className="w-full max-w-7xl mx-auto flex items-center justify-around h-[68px] px-4 pb-2">
         <Link href="/home" className="flex flex-col items-center justify-center w-full h-full space-y-1 group">
           <Home size={22} className={`transition-colors ${pathname === '/home' ? 'text-terracotta' : 'text-warmgrey group-hover:text-charcoal'}`} />
           <span className={`whitespace-nowrap text-[10px] font-medium transition-colors ${pathname === '/home' ? 'text-terracotta font-bold' : 'text-warmgrey group-hover:text-charcoal'}`}>Home</span>

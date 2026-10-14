@@ -289,7 +289,7 @@ export default function ProductDetailClient({
       </div>
 
       {/* 2. Content Details Section */}
-      <div className="max-w-[420px] mx-auto w-full px-5 pt-5 flex flex-col space-y-6">
+      <div className="max-w-4xl mx-auto w-full px-5 pt-5 flex flex-col space-y-6">
         {/* Title, Category & Price */}
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -566,7 +566,7 @@ export default function ProductDetailClient({
 
       {/* 3. Sticky Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-linen-border py-3 px-4 shadow-lg">
-        <div className="max-w-[420px] mx-auto flex items-center gap-3">
+        <div className="max-w-4xl mx-auto flex items-center gap-3">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold text-warmgrey">Total</span>
             <span className="text-lg font-extrabold text-charcoal">{formattedPrice}</span>
