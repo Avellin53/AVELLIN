@@ -231,12 +231,12 @@ export async function middleware(request: NextRequest) {
     if (request.method === 'OPTIONS') {
       const allowedOrigin = originHeader && isAllowedDomain(originHeader, hostHeader)
         ? originHeader
-        : '*'
+        : 'https://avellin-three.vercel.app'
       return new NextResponse(null, {
         status: 204,
         headers: {
           'Access-Control-Allow-Origin': allowedOrigin,
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
           'Access-Control-Allow-Credentials': 'true',
           'Access-Control-Max-Age': '86400',
@@ -319,7 +319,7 @@ export async function middleware(request: NextRequest) {
     supabaseResponse.headers.set('Access-Control-Allow-Origin', originHeader)
     supabaseResponse.headers.set(
       'Access-Control-Allow-Methods',
-      'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+      'GET, POST, PUT, DELETE, OPTIONS'
     )
     supabaseResponse.headers.set(
       'Access-Control-Allow-Headers',
