@@ -31,8 +31,9 @@ export default function ForgotPasswordForm() {
 
       setSent(true);
       toast.success('Password reset link sent to your email.');
-    } catch (err: any) {
-      setError(err?.message || 'Failed to send password reset link');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send password reset link';
+      setError(message);
     } finally {
       setLoading(false);
     }

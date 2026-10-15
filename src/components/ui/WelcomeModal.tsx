@@ -90,7 +90,7 @@ export default function WelcomeModal() {
             className="w-4 h-4 rounded text-terracotta focus:ring-terracotta border-neutral-300"
           />
           <label htmlFor="dontShow" className="text-xs text-neutral-600 cursor-pointer">
-            Don't show this again
+            Don&apos;t show this again
           </label>
         </div>
 

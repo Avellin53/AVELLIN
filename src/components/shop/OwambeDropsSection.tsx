@@ -10,6 +10,11 @@ import { toast } from 'sonner';
 
 export default function OwambeDropsSection({ products }: { products: any[] }) {
   const addToCart = useCartStore((state) => state.addToCart);
+  const [currentTime, setCurrentTime] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    setCurrentTime(Date.now());
+  }, []);
 
   if (!products || products.length === 0) {
     return null;
@@ -40,12 +45,18 @@ export default function OwambeDropsSection({ products }: { products: any[] }) {
       {/* Horizontal Scrollable Carousel */}
       <div className="flex gap-4 overflow-x-auto scrollbar-none px-4 pb-2 pt-1">
         {products.map((item, index) => {
-          const isEnded = item.flash_sale_end
-            ? new Date(item.flash_sale_end).getTime() <= Date.now()
-            : false;
+          const isEnded = Boolean(
+            item.flash_sale_end &&
+            currentTime > 0 &&
+            new Date(item.flash_sale_end).getTime() <= currentTime
+          );
 
           const handleAdd = () => {
-            if (isEnded) {
+            const isCurrentlyEnded = item.flash_sale_end
+              ? new Date(item.flash_sale_end).getTime() <= Date.now()
+              : false;
+
+            if (isCurrentlyEnded) {
               toast.error('This Owambe Drop has ended!');
               return;
             }

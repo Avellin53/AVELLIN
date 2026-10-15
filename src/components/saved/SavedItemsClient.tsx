@@ -9,17 +9,19 @@ import { useCartStore } from '@/store/cartStore';
 import ProductCard from '@/components/product/ProductCard';
 import { toast } from 'sonner';
 
+const emptySubscribe = () => () => {};
+
 export default function SavedItemsClient() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const mounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   const savedItems = useWishlistStore((state) => state.savedItems || []);
   const removeFromSaved = useWishlistStore((state) => state.removeFromSaved);
   const addToCart = useCartStore((state) => state.addToCart);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   if (!mounted) {
     return (

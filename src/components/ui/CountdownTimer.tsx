@@ -19,16 +19,15 @@ export default function CountdownTimer({
     minutes: number;
     seconds: number;
     isEnded: boolean;
-  }>({
+  }>(() => ({
     hours: 0,
     minutes: 0,
     seconds: 0,
-    isEnded: false,
-  });
+    isEnded: !targetDate,
+  }));
 
   useEffect(() => {
     if (!targetDate) {
-      setTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true });
       return;
     }
 
