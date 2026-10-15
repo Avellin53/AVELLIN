@@ -28,9 +28,9 @@ export async function POST(req: Request) {
       base64Clean = parts[1];
     }
 
-    // Call Gemini 1.5 Flash via AI SDK
+    // Call Gemini 1.5 Pro via AI SDK
     const { text } = await generateText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-1.5-pro'),
       messages: [
         {
           role: 'user',

@@ -29,9 +29,9 @@ export async function POST(req: Request) {
       base64Clean = parts[1];
     }
 
-    // Prompt Gemini 1.5 Flash
+    // Prompt Gemini 1.5 Pro
     const { text } = await generateText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-1.5-pro'),
       messages: [
         {
           role: 'user',
