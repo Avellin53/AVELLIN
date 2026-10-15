@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductCard from '@/components/product/ProductCard';
 import { useLensStore } from '@/store/lensStore';
 import { Sparkles, Camera, X } from 'lucide-react';
 import OwambeDropsSection from '@/components/shop/OwambeDropsSection';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 export default function HomeFeedClient({
   initialProducts,
@@ -13,7 +14,39 @@ export default function HomeFeedClient({
   initialProducts: any[];
   flashSaleProducts?: any[];
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams?.get('category');
+  const [activeCategory, setActiveCategory] = useState(categoryParam || 'All');
+
+  useEffect(() => {
+    setActiveCategory(categoryParam || 'All');
+  }, [categoryParam]);
+
   const { isAnalyzing, statusMessage, lensResults, keywords, clearLensSearch } = useLensStore();
+
+  const baseCategories = ['All', 'Pants', 'Hoodies', 'Native'];
+  const productCategories = initialProducts
+    ? Array.from(new Set(initialProducts.map((p: any) => p.category).filter(Boolean)))
+    : [];
+  const categories = Array.from(new Set([...baseCategories, ...productCategories]));
+
+  const handleCategoryClick = (category: string) => {
+    setActiveCategory(category);
+    const targetPath = pathname || '/home';
+    if (category === 'All') {
+      router.push(targetPath);
+    } else {
+      router.push(`${targetPath}?category=${encodeURIComponent(category)}`);
+    }
+  };
+
+  const filteredProducts = (initialProducts || []).filter(
+    (product: any) =>
+      activeCategory === 'All' ||
+      (product.category && product.category.toLowerCase() === activeCategory.toLowerCase())
+  );
 
   // If Lens is currently analyzing an image
   if (isAnalyzing) {
@@ -96,14 +129,39 @@ export default function HomeFeedClient({
         <OwambeDropsSection products={flashSaleProducts} />
       )}
 
-      <div className="px-4 pt-2">
-        <h1 className="text-xl font-bold text-neutral-900">Your AI Feed</h1>
-        <p className="text-xs text-neutral-500">Personalized Nigerian luxury collection</p>
+      <div className="px-4 pt-2 flex flex-col space-y-3">
+        <div>
+          <h1 className="text-xl font-bold text-neutral-900">Your AI Feed</h1>
+          <p className="text-xs text-neutral-500">Personalized Nigerian luxury collection</p>
+        </div>
+
+        {/* Scrollable Category Filter Pills */}
+        <div 
+          className="flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 py-1"
+          style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
+        >
+          {categories.map((category) => {
+            const isSelected = activeCategory.toLowerCase() === category.toLowerCase();
+            return (
+              <button
+                key={category}
+                onClick={() => handleCategoryClick(category)}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm border ${
+                  isSelected
+                    ? 'bg-neutral-900 text-white border-neutral-900'
+                    : 'bg-white border-linen-border text-charcoal hover:bg-neutral-100'
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {initialProducts && initialProducts.length > 0 ? (
+      {filteredProducts && filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
-          {initialProducts.map((product: any, index: number) => (
+          {filteredProducts.map((product: any, index: number) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -112,10 +170,26 @@ export default function HomeFeedClient({
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center flex flex-col items-center">
-          <Sparkles size={32} className="text-neutral-300 mb-4 opacity-50" />
-          <h3 className="font-bold text-neutral-900">New collections dropping soon</h3>
-          <p className="text-xs text-neutral-500 mt-1 max-w-[200px]">Check back later for exclusive drops from African designers.</p>
+        <div className="py-16 text-center flex flex-col items-center px-4">
+          <Sparkles size={32} className="text-neutral-300 mb-3 opacity-50" />
+          <h3 className="font-bold text-neutral-900">
+            {activeCategory === 'All'
+              ? 'New collections dropping soon'
+              : `No products found in "${activeCategory}"`}
+          </h3>
+          <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
+            {activeCategory === 'All'
+              ? 'Check back later for exclusive drops from African designers.'
+              : 'Try selecting another category or view all products.'}
+          </p>
+          {activeCategory !== 'All' && (
+            <button
+              onClick={() => handleCategoryClick('All')}
+              className="mt-4 px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold shadow hover:bg-neutral-800 transition"
+            >
+              Show All Products
+            </button>
+          )}
         </div>
       )}
     </div>

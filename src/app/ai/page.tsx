@@ -4,16 +4,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Send, ChevronLeft, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { useChat, Message } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import ColorAnalysisCard from '@/components/profile/ColorAnalysisCard';
 import { toast } from 'sonner';
 
 export default function AIFitPage() {
   const router = useRouter();
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
 
   // Load from localStorage or start fresh (no legacy hardcoded messages)
-  const [initialMessages] = useState<Message[]>(() => {
+  const [initialMessages] = useState<UIMessage[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ms_ave_chat');
       if (saved) {
@@ -32,22 +34,34 @@ export default function AIFitPage() {
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
+    sendMessage,
+    status,
     setMessages,
-    setInput,
   } = useChat({
-    api: '/api/chat',
-    initialMessages,
-    onError: (error) => {
+    messages: initialMessages,
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+    }),
+    onError: (error: any) => {
       console.error('AI STREAM ERROR: ', error);
       toast.error('AI Style Plug connection issue', {
         description: error?.message || 'Ms. Ave was unable to respond. Please check your connection or retry.',
       });
     },
   });
+
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage({ text: input });
+    setInput('');
+  };
 
   useEffect(() => {
     const checkRole = async () => {
@@ -161,24 +175,33 @@ export default function AIFitPage() {
             </div>
           </div>
         ) : (
-          messages.map((msg: Message) => (
-            <div
-              key={msg.id}
-              className={`flex flex-col ${
-                msg.role === 'user' ? 'items-end' : 'items-start'
-              }`}
-            >
+          messages.map((msg: any) => {
+            const content =
+              msg.content ??
+              msg.parts
+                ?.filter((p: any) => p.type === 'text')
+                .map((p: any) => p.text)
+                .join('') ??
+              '';
+            return (
               <div
-                className={`max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-charcoal text-white rounded-tr-sm shadow-sm'
-                    : 'bg-white border border-linen-border text-charcoal rounded-tl-sm shadow-sm'
+                key={msg.id}
+                className={`flex flex-col ${
+                  msg.role === 'user' ? 'items-end' : 'items-start'
                 }`}
               >
-                {msg.content}
+                <div
+                  className={`max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-charcoal text-white rounded-tr-sm shadow-sm'
+                      : 'bg-white border border-linen-border text-charcoal rounded-tl-sm shadow-sm'
+                  }`}
+                >
+                  {content}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {isLoading && messages[messages.length - 1]?.role === 'user' && (

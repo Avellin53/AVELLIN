@@ -1,5 +1,5 @@
 import { generateText } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export const maxDuration = 45;
@@ -15,6 +15,19 @@ export async function POST(req: Request) {
       );
     }
 
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+      console.error('[/api/lens] Error: Neither GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY is configured in environment variables.');
+      return new Response(
+        JSON.stringify({ error: 'GEMINI_API_KEY is missing in environment variables.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const google = createGoogleGenerativeAI({
+      apiKey,
+    });
+
     // Standardize base64 data: strip data URL prefix if present for clean extraction
     let mimeType = 'image/jpeg';
     let base64Clean = image;
@@ -28,9 +41,9 @@ export async function POST(req: Request) {
       base64Clean = parts[1];
     }
 
-    // Call Gemini 1.5 Pro via AI SDK
+    // Call Gemini 2.5 Pro via AI SDK
     const { text } = await generateText({
-      model: google('gemini-1.5-pro'),
+      model: google('gemini-2.5-pro'),
       messages: [
         {
           role: 'user',
@@ -42,7 +55,7 @@ export async function POST(req: Request) {
             {
               type: 'image',
               image: Buffer.from(base64Clean, 'base64'),
-              mimeType,
+              mediaType: mimeType,
             },
           ],
         },
@@ -112,7 +125,13 @@ export async function POST(req: Request) {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('[/api/lens] Error processing visual search:', error);
+    console.error('[/api/lens] Error processing visual search:', error?.message || error, {
+      name: error?.name,
+      stack: error?.stack,
+      cause: error?.cause,
+      status: error?.status || error?.statusCode,
+      data: error?.data,
+    });
     return new Response(
       JSON.stringify({
         error: error?.message || 'Failed to analyze photo with Google Gemini',

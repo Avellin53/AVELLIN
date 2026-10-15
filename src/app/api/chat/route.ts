@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { streamText, convertToModelMessages } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 export const maxDuration = 30;
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      console.error("AI STREAM ERROR: ", new Error("GEMINI_API_KEY is not defined in environment variables."));
+      console.error("[/api/chat] Error: Neither GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY is defined in environment variables.");
       return new Response(
         JSON.stringify({
           error: 'GEMINI_API_KEY is missing in environment variables.',
@@ -32,16 +32,28 @@ export async function POST(req: Request) {
     Your expertise: Deep knowledge of fashion trends, color theory, fabric quality, and custom-fit tailoring. You seamlessly blend global luxury with Nigerian fashion culture (e.g., Owambe outfits, native fabrics, high-end streetwear).
     Rules: Keep responses conversational and naturally formatted. Never sound like a robot. If a user just says "Hi", greet them warmly and ask what kind of look they are trying to put together today. Do not use overly formal or stiff language.`;
 
+    const modelMessages = Array.isArray(messages) && messages.length > 0 && messages[0]?.parts
+      ? await convertToModelMessages(messages)
+      : messages;
+
     try {
       const result = await streamText({
-        model: google('gemini-1.5-pro'),
+        model: google('gemini-2.5-pro'),
         system: systemPrompt,
-        messages,
+        messages: modelMessages,
+        onError({ error }) {
+          console.error('[/api/chat] AI stream generation error:', error);
+        },
       });
 
-      return result.toDataStreamResponse();
+      return result.toUIMessageStreamResponse();
     } catch (streamError: any) {
-      console.error("AI STREAM ERROR: ", streamError);
+      console.error('[/api/chat] AI stream initialization error:', streamError?.message || streamError, {
+        name: streamError?.name,
+        stack: streamError?.stack,
+        cause: streamError?.cause,
+        status: streamError?.status || streamError?.statusCode,
+      });
       return new Response(
         JSON.stringify({
           error: streamError?.message || 'AI streaming failed',
@@ -53,7 +65,12 @@ export async function POST(req: Request) {
       );
     }
   } catch (error: any) {
-    console.error("AI STREAM ERROR: ", error);
+    console.error('[/api/chat] Request processing error:', error?.message || error, {
+      name: error?.name,
+      stack: error?.stack,
+      cause: error?.cause,
+      status: error?.status || error?.statusCode,
+    });
     return new Response(
       JSON.stringify({
         error: error?.message || 'Failed to process AI request',

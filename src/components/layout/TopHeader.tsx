@@ -1,20 +1,29 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Bell, Search, Camera, ShoppingCart, ChevronLeft, Sparkles } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 import { useCartStore } from '@/store/cartStore';
 import { useLensStore } from '@/store/lensStore';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/product/ProductCard';
 
-export default function TopHeader() {
+function TopHeaderContent() {
   const [scrolled, setScrolled] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [activeCategory, setActiveCategory] = useState('Fashion');
-  const [categories, setCategories] = useState<string[]>([]);
+  const [role, setRole] = useState<string | null>(null);
+  
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams?.get('category') || 'All';
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  useEffect(() => {
+    setActiveCategory(categoryParam);
+  }, [categoryParam]);
+
+  const [categories, setCategories] = useState<string[]>(['All', 'Pants', 'Hoodies', 'Native']);
   const [loadingCats, setLoadingCats] = useState(true);
   
   const [mounted, setMounted] = useState(false);
@@ -29,6 +38,52 @@ export default function TopHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const showBack = pathname !== '/home' && pathname !== '/';
+
+  // Fetch authenticated user role from profiles table
+  useEffect(() => {
+    const supabase = createClient();
+    async function fetchUserRole() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+          setRole(profile?.role || 'shopper');
+        } else {
+          setRole(null);
+        }
+      } catch (err) {
+        console.error('Error fetching user role in TopHeader:', err);
+        setRole(null);
+      }
+    }
+
+    fetchUserRole();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          setRole(profile?.role || 'shopper');
+        } catch {
+          setRole('shopper');
+        }
+      } else {
+        setRole(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,14 +101,28 @@ export default function TopHeader() {
     const fetchCategories = async () => {
       const supabase = createClient();
       const { data } = await supabase.from('products').select('category');
+      const baseCategories = ['All', 'Pants', 'Hoodies', 'Native'];
       if (data) {
         const uniqueCats = Array.from(new Set(data.map((p: any) => p.category).filter(Boolean)));
-        setCategories(uniqueCats as string[]);
+        const merged = Array.from(new Set([...baseCategories, ...uniqueCats]));
+        setCategories(merged as string[]);
+      } else {
+        setCategories(baseCategories);
       }
       setLoadingCats(false);
     };
     fetchCategories();
   }, []);
+
+  const handleCategoryClick = (category: string) => {
+    setActiveCategory(category);
+    const targetPath = pathname === '/home' || pathname === '/browse' ? pathname : '/home';
+    if (category === 'All') {
+      router.push(targetPath);
+    } else {
+      router.push(`${targetPath}?category=${encodeURIComponent(category)}`);
+    }
+  };
 
   const handleNotification = () => {
     toast('No new notifications', {
@@ -140,9 +209,18 @@ export default function TopHeader() {
                 <ChevronLeft onClick={() => router.back()} className="cursor-pointer text-charcoal" />
               )}
               <h1 className="font-extrabold text-2xl tracking-tighter text-charcoal">Avellin</h1>
-              <span className="px-2 py-0.5 rounded-full bg-terracotta-tint text-terracotta text-[10px] font-bold tracking-wider">
-                VENDOR
-              </span>
+              
+              {/* Dynamic User Role Badge */}
+              {role === 'vendor' && (
+                <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold tracking-wider uppercase border border-red-200">
+                  VENDOR
+                </span>
+              )}
+              {role === 'shopper' && (
+                <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-bold tracking-wider uppercase border border-neutral-200">
+                  SHOPPER
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <Link href="/cart" className="relative p-2 rounded-full hover:bg-black/5 transition" aria-label="Shopping Cart">
@@ -230,20 +308,35 @@ export default function TopHeader() {
                   <div key={i} className="h-9 w-24 bg-linen-surface border border-linen-border rounded-full animate-pulse flex-shrink-0" />
                 ))
               ) : (
-                categories.map((category) => (
-                  <button 
-                    key={category} 
-                    onClick={() => setActiveCategory(category)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm border ${activeCategory === category ? 'bg-terracotta text-white border-terracotta' : 'bg-white border-linen-border text-charcoal hover:bg-linen-surface'}`}
-                  >
-                    {category}
-                  </button>
-                ))
+                categories.map((category) => {
+                  const isSelected = activeCategory.toLowerCase() === category.toLowerCase();
+                  return (
+                    <button 
+                      key={category} 
+                      onClick={() => handleCategoryClick(category)}
+                      className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm border ${
+                        isSelected 
+                          ? 'bg-neutral-900 text-white border-neutral-900' 
+                          : 'bg-white border-linen-border text-charcoal hover:bg-neutral-100'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  );
+                })
               )}
             </div>
           )}
         </div>
       </header>
     </>
+  );
+}
+
+export default function TopHeader() {
+  return (
+    <Suspense fallback={<header className="fixed top-0 left-0 right-0 w-full z-50 bg-linen/95 backdrop-blur-xl border-b border-linen-border h-[180px]" />}>
+      <TopHeaderContent />
+    </Suspense>
   );
 }

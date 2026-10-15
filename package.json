@@ -9,12 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ai-sdk/google": "^0.0.52",
+    "@ai-sdk/google": "^4.0.96",
     "@ai-sdk/openai": "^0.0.58",
     "@ai-sdk/react": "^4.0.140",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
-    "ai": "^3.4.9",
+    "ai": "^7.0.141",
     "autoprefixer": "^10.6.1",
     "enhanced-resolve": "^5.25.1",
     "lucide-react": "^1.48.0",
