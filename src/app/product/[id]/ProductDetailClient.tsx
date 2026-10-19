@@ -14,13 +14,17 @@ import {
   Check,
   Star,
   MessageCircle,
-  Mail,
   BadgeCheck,
   Send,
+  Lock,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
-import { createClient } from '@/utils/supabase/client';
+import { useAuthModalStore } from '@/store/authModalStore';
+import { submitReviewAction } from '@/app/actions/reviews';
+import VendorChatModal from '@/components/chat/VendorChatModal';
 import { toast } from 'sonner';
 
 interface Product {
@@ -72,11 +76,14 @@ export default function ProductDetailClient({
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('M');
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
 
-  // Cart store
+  // Cart store & Auth modal store
   const addToCart = useCartStore((state) => state.addToCart);
   const cartItems = useCartStore((state) => state.cartItems || []);
   const totalCartItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const openAuthModal = useAuthModalStore((state) => state.openAuthModal);
 
   // Wishlist store
   const isSaved = useWishlistStore((state) => state.isSaved(product.id));
@@ -93,16 +100,55 @@ export default function ProductDetailClient({
     setMounted(true);
   }, []);
 
+  // Sync reviews when server component revalidates
+  useEffect(() => {
+    if (initialReviews) {
+      setReviews(initialReviews);
+    }
+  }, [initialReviews]);
+
   const sizes = ['S', 'M', 'L', 'XL'];
 
+  // Add to Cart handler with guest auth modal trigger
   const handleAddToCart = () => {
+    if (!currentUser?.id) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to add this handcrafted luxury piece to your shopping cart.',
+        itemTitle: product.title,
+      });
+      return;
+    }
     addToCart(product);
     toast.success('Added to cart', {
       description: `${product.title} has been added to your shopping cart.`,
     });
   };
 
+  // Buy Now handler with guest auth modal trigger
+  const handleBuyNow = () => {
+    if (!currentUser?.id) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to proceed directly to secure encrypted checkout.',
+        itemTitle: product.title,
+      });
+      return;
+    }
+    addToCart(product);
+    router.push('/cart');
+  };
+
+  // Wishlist handler with guest auth modal trigger
   const handleToggleWishlist = () => {
+    if (!currentUser?.id) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to curate and save luxury pieces to your bespoke wishlist.',
+        itemTitle: product.title,
+      });
+      return;
+    }
     const newlySaved = toggleSave(product);
     toast(newlySaved ? 'Saved to wishlist' : 'Removed from wishlist', {
       description: newlySaved
@@ -111,26 +157,18 @@ export default function ProductDetailClient({
     });
   };
 
-  // Custom-Fit Size Passport snippet
-  const sizePassportSnippet = sizePassport && (sizePassport.shoulder || sizePassport.bust || sizePassport.waist || sizePassport.inseam)
-    ? `\n\nHere is my Size Passport for a custom fit: Shoulder: ${sizePassport.shoulder || 'N/A'}, Bust: ${sizePassport.bust || 'N/A'}, Waist: ${sizePassport.waist || 'N/A'}, Inseam: ${sizePassport.inseam || 'N/A'}.`
-    : '';
-
-  // Vendor contact link computation
-  const cleanPhone = vendor?.phone ? vendor.phone.replace(/[^0-9]/g, '') : '';
-  const baseWhatsappText = `Hello, I am interested in buying "${product.title}" on AVELLIN.${sizePassportSnippet}`;
-  const vendorWhatsappLink = cleanPhone
-    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(baseWhatsappText)}`
-    : null;
-
-  const baseEmailBody = `Hello,\n\nI am interested in buying "${product.title}" on AVELLIN.${sizePassportSnippet}\n\nLooking forward to hearing from you.`;
-  const vendorEmailLink = vendor?.email
-    ? `mailto:${vendor.email}?subject=${encodeURIComponent(
-        `AVELLIN Inquiry: ${product.title}`
-      )}&body=${encodeURIComponent(baseEmailBody)}`
-    : `mailto:concierge@avellin.com?subject=${encodeURIComponent(
-        `AVELLIN Inquiry: ${product.title}`
-      )}&body=${encodeURIComponent(baseEmailBody)}`;
+  // Open In-App Vendor Chat
+  const handleOpenVendorChat = () => {
+    if (!currentUser?.id) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: `Sign in to initiate an interactive in-app chat with ${vendor?.name || 'the vendor'}.`,
+        itemTitle: product.title,
+      });
+      return;
+    }
+    setChatModalOpen(true);
+  };
 
   // Average rating calculation
   const totalReviewsCount = reviews.length;
@@ -140,7 +178,7 @@ export default function ProductDetailClient({
       : 5.0;
   const avgRatingFormatted = avgRatingNumber.toFixed(1);
 
-  // Review submission
+  // Review submission function with Supabase insert & router.refresh()
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentInput.trim()) {
@@ -148,79 +186,44 @@ export default function ProductDetailClient({
       return;
     }
 
+    if (!currentUser?.id) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to share your verified review and rating for this piece.',
+        itemTitle: product.title,
+      });
+      return;
+    }
+
     setSubmittingReview(true);
     try {
-      const supabase = createClient();
-      let shopperId = currentUser?.id;
+      // Execute the database insert via server action
+      const result = await submitReviewAction({
+        productId: product.id,
+        rating: ratingInput,
+        comment: commentInput.trim(),
+      });
 
-      if (!shopperId) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        shopperId = user?.id;
-      }
-
-      if (!shopperId) {
-        toast.error('Please sign in to submit a review', {
-          action: {
-            label: 'Sign In',
-            onClick: () => router.push('/login'),
-          },
-        });
+      if (!result.success || !result.review) {
+        toast.error(result.error || 'Failed to submit review. Please try again.');
         setSubmittingReview(false);
         return;
       }
 
-      const newReviewPayload = {
-        product_id: product.id,
-        shopper_id: shopperId,
-        rating: ratingInput,
-        comment: commentInput.trim(),
-        created_at: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
-        .from('reviews')
-        .insert([newReviewPayload])
-        .select('*, profiles(name)')
-        .single();
-
-      if (error) {
-        console.error('Failed to submit review:', error);
-        // Fallback optimistic display if RLS or relation restricts select
-        const optimisticReview: Review = {
-          id: Math.random().toString(),
-          product_id: product.id,
-          shopper_id: shopperId,
-          rating: ratingInput,
-          comment: commentInput.trim(),
-          created_at: new Date().toISOString(),
-          profiles: { name: currentUser?.email?.split('@')[0] || 'Verified Shopper' },
-        };
-        setReviews([optimisticReview, ...reviews]);
-      } else if (data) {
-        setReviews([data, ...reviews]);
-      } else {
-        const optimisticReview: Review = {
-          id: Math.random().toString(),
-          product_id: product.id,
-          shopper_id: shopperId,
-          rating: ratingInput,
-          comment: commentInput.trim(),
-          created_at: new Date().toISOString(),
-          profiles: { name: currentUser?.email?.split('@')[0] || 'Verified Shopper' },
-        };
-        setReviews([optimisticReview, ...reviews]);
-      }
-
+      // If successful: immediately update state and call router.refresh() to pull fresh database row
+      setReviews((prev) => [result.review, ...prev]);
       setCommentInput('');
       setRatingInput(5);
-      toast.success('Review submitted successfully!', {
-        description: 'Thank you for sharing your feedback with the vendor.',
+
+      // Tell Next.js to re-fetch the product page from Supabase
+      router.refresh();
+
+      toast.success('Review published successfully!', {
+        description: 'Thank you for sharing your feedback with the designer.',
       });
     } catch (err: any) {
       console.error('Review submit error:', err);
-      toast.error('Failed to submit review. Please try again.');
+      toast.error(err?.message || 'Failed to submit review. Please try again.');
     } finally {
       setSubmittingReview(false);
     }
@@ -228,22 +231,33 @@ export default function ProductDetailClient({
 
   const formattedPrice = `₦${(product.price || 0).toLocaleString()}`;
   const fakeOldPrice = Math.round((product.price || 0) * 1.15);
+  const vendorDisplayName = vendor?.name || 'AVELLIN Premier Atelier';
 
   return (
-    <div className="flex flex-col min-h-screen bg-linen relative pb-36">
-      {/* 1. Header & Image Section */}
-      <div className="relative aspect-[3/4] max-h-[460px] bg-neutral-100 w-full overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-linen relative pb-40">
+      {/* 1. Header & Hero Image Section with Skeleton Loader */}
+      <div className="relative aspect-[3/4] max-h-[480px] bg-neutral-100 w-full overflow-hidden">
+        {/* Shimmering Skeleton Loader */}
+        {!heroImageLoaded && (
+          <div className="absolute inset-0 bg-neutral-200 animate-pulse flex items-center justify-center z-0">
+            <div className="w-10 h-10 rounded-full border-3 border-neutral-300 border-t-terracotta animate-spin opacity-50" />
+          </div>
+        )}
+
         {product.image_url ? (
           <Image
             src={product.image_url}
             alt={product.title}
             fill
-            sizes="(max-width: 768px) 100vw, 420px"
+            sizes="(max-width: 768px) 100vw, 480px"
             priority
-            className="object-cover"
+            onLoad={() => setHeroImageLoaded(true)}
+            className={`object-cover transition-all duration-700 ${
+              heroImageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+            }`}
           />
         ) : (
-          <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-400">
+          <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-400 font-medium">
             No Image Available
           </div>
         )}
@@ -252,7 +266,7 @@ export default function ProductDetailClient({
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
           <button
             onClick={() => router.back()}
-            className="bg-white/85 backdrop-blur-md text-charcoal rounded-full p-2.5 shadow-sm hover:bg-white transition"
+            className="bg-white/90 backdrop-blur-md text-charcoal rounded-full p-2.5 shadow-sm hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
             aria-label="Back"
           >
             <ArrowLeft size={20} />
@@ -260,7 +274,7 @@ export default function ProductDetailClient({
           <div className="flex items-center gap-2">
             <Link
               href="/cart"
-              className="relative bg-white/85 backdrop-blur-md text-charcoal rounded-full p-2.5 shadow-sm hover:bg-white transition"
+              className="relative bg-white/90 backdrop-blur-md text-charcoal rounded-full p-2.5 shadow-sm hover:bg-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
               aria-label="Shopping Cart"
             >
               <ShoppingCart size={20} />
@@ -272,10 +286,10 @@ export default function ProductDetailClient({
             </Link>
             <button
               onClick={handleToggleWishlist}
-              className={`backdrop-blur-md rounded-full p-2.5 shadow-sm transition ${
+              className={`backdrop-blur-md rounded-full p-2.5 shadow-sm hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ${
                 mounted && isSaved
                   ? 'bg-terracotta text-white'
-                  : 'bg-white/85 text-charcoal hover:bg-white'
+                  : 'bg-white/90 text-charcoal hover:bg-white'
               }`}
               aria-label="Save to Wishlist"
             >
@@ -293,16 +307,11 @@ export default function ProductDetailClient({
         {/* Title, Category & Price */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            {product.category ? (
-              <span className="text-[11px] font-bold uppercase tracking-widest text-terracotta bg-terracotta/10 px-2.5 py-0.5 rounded-full">
-                {product.category}
-              </span>
-            ) : (
-              <span className="text-[11px] font-bold uppercase tracking-widest text-terracotta bg-terracotta/10 px-2.5 py-0.5 rounded-full">
-                Luxury Edit
-              </span>
-            )}
-            <div className="flex items-center gap-1 text-amber-500 text-xs font-bold bg-white px-2 py-0.5 rounded-full border border-linen-border">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-terracotta bg-terracotta/10 px-2.5 py-0.5 rounded-full border border-terracotta/20">
+              {product.category || 'Luxury Edit'}
+            </span>
+
+            <div className="flex items-center gap-1 text-amber-500 text-xs font-bold bg-white px-2.5 py-1 rounded-full border border-linen-border shadow-xs">
               <Star size={13} fill="currentColor" />
               <span>{avgRatingFormatted}</span>
               <span className="text-warmgrey font-normal">
@@ -311,18 +320,29 @@ export default function ProductDetailClient({
             </div>
           </div>
 
-          <h1 className="text-2xl font-extrabold text-charcoal leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-charcoal leading-tight">
             {product.title}
           </h1>
 
-          <div className="flex items-baseline gap-3 mt-3">
-            <span className="text-2xl font-extrabold text-charcoal">
+          {/* Vendor byline with verified green checkmark */}
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="text-xs text-neutral-500 font-medium">Crafted by</span>
+            <span className="text-xs font-bold text-charcoal">{vendorDisplayName}</span>
+            <BadgeCheck
+              size={15}
+              className="text-emerald-600 fill-emerald-100 flex-shrink-0"
+              aria-label="Verified Designer"
+            />
+          </div>
+
+          <div className="flex items-baseline gap-3 mt-3.5">
+            <span className="text-2xl sm:text-3xl font-black text-charcoal">
               {formattedPrice}
             </span>
             <span className="text-sm text-gray-400 line-through">
               ₦{fakeOldPrice.toLocaleString()}
             </span>
-            <span className="bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0.5 rounded font-bold">
+            <span className="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-bold border border-emerald-200">
               -15% OFF
             </span>
           </div>
@@ -334,17 +354,20 @@ export default function ProductDetailClient({
             <span className="text-xs font-bold text-charcoal uppercase tracking-wider">
               Select Size
             </span>
-            <span className="text-xs text-warmgrey font-medium">Fit Calibrated</span>
+            <span className="text-xs text-warmgrey font-medium flex items-center gap-1">
+              <Sparkles size={12} className="text-ochre" />
+              Fit Calibrated
+            </span>
           </div>
           <div className="flex gap-2">
             {sizes.map((s) => (
               <button
                 key={s}
                 onClick={() => setSelectedSize(s)}
-                className={`flex-1 h-11 rounded-xl text-xs font-bold transition flex items-center justify-center border ${
+                className={`flex-1 h-11 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center border hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
                   selectedSize === s
-                    ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
-                    : 'bg-white text-charcoal border-linen-border hover:bg-neutral-50'
+                    ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
+                    : 'bg-white text-charcoal border-linen-border hover:bg-neutral-50 shadow-xs'
                 }`}
               >
                 {s}
@@ -354,78 +377,79 @@ export default function ProductDetailClient({
         </div>
 
         {/* Description */}
-        <div className="bg-white rounded-2xl p-4 border border-linen-border shadow-sm">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-linen-border shadow-xs hover:shadow-sm transition-shadow">
           <h3 className="text-xs font-bold uppercase tracking-wider text-charcoal mb-2">
             Product Description
           </h3>
-          <p className="text-sm text-neutral-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
             {product.description ||
-              'Expertly crafted with premium custom-fit textiles, blending contemporary luxury with timeless African heritage styling.'}
+              'Expertly crafted with premium custom-fit textiles, blending contemporary African couture with timeless bespoke heritage tailoring.'}
           </p>
         </div>
 
         {/* Biometric Fit & Guarantee Highlights */}
-        <div className="grid grid-cols-2 gap-2 text-xs text-neutral-600">
-          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-linen-border shadow-sm">
-            <Check size={16} className="text-emerald-600 flex-shrink-0" />
-            <span className="font-medium">100% Verified Vendor</span>
+        <div className="grid grid-cols-2 gap-3 text-xs text-neutral-600">
+          <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-linen-border shadow-xs hover:shadow-sm transition-all duration-300">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+              <BadgeCheck size={18} />
+            </div>
+            <div>
+              <span className="font-bold text-charcoal block">100% Verified Atelier</span>
+              <span className="text-[10px] text-neutral-400">Authenticated Quality</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-linen-border shadow-sm">
-            <Sparkles size={16} className="text-amber-500 flex-shrink-0" />
-            <span className="font-medium">Biometric Fit Assured</span>
+          <div className="flex items-center gap-2.5 p-3.5 bg-white rounded-2xl border border-linen-border shadow-xs hover:shadow-sm transition-all duration-300">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <span className="font-bold text-charcoal block">Biometric Fit Assured</span>
+              <span className="text-[10px] text-neutral-400">3D Passport Ready</span>
+            </div>
           </div>
         </div>
 
         {/* ========================================================= */}
-        {/* VENDOR CONTACT SECTION (Below Add to Cart / Biometric section) */}
+        {/* VENDOR CONTACT SECTION (Interactive In-App Vendor Chat) */}
         {/* ========================================================= */}
-        <div className="bg-white rounded-2xl p-4 border border-linen-border shadow-sm space-y-3">
+        <div className="bg-white rounded-2xl p-5 border border-linen-border shadow-xs hover:shadow-md transition-all duration-300 space-y-3.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <BadgeCheck size={20} />
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-sm shadow-sm flex-shrink-0">
+                {vendorDisplayName.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <h4 className="text-xs font-bold text-charcoal">
-                  {vendor?.name || 'AVELLIN Premier Vendor'}
-                </h4>
-                <p className="text-[11px] text-emerald-700 font-semibold">
-                  Verified Vendor • Quick response rate
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-sm font-bold text-charcoal">{vendorDisplayName}</h4>
+                  <BadgeCheck size={16} className="text-emerald-600 fill-emerald-100 flex-shrink-0" />
+                </div>
+                <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Verified Vendor • Quick response rate</span>
                 </p>
               </div>
             </div>
           </div>
 
-          <p className="text-xs text-neutral-500">
-            Have questions regarding custom-fit tailoring, native fabric sourcing, or express dispatch? Chat directly with the vendor.
+          <p className="text-xs text-neutral-600 leading-relaxed">
+            Have questions regarding custom-fit tailoring, native fabric sourcing, or express waybill dispatch?
+            Chat directly with the vendor in real-time.
           </p>
 
-          {/* Secondary Message Vendor Button */}
-          {vendorWhatsappLink ? (
-            <a
-              href={vendorWhatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm"
-            >
-              <MessageCircle size={16} />
-              <span>Message Vendor on WhatsApp</span>
-            </a>
-          ) : (
-            <a
-              href={vendorEmailLink}
-              className="w-full h-11 bg-neutral-800 hover:bg-black text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition shadow-sm"
-            >
-              <Mail size={16} />
-              <span>Inquire with Vendor (Email)</span>
-            </a>
-          )}
+          {/* Interactive In-App Chat Trigger Button */}
+          <button
+            onClick={handleOpenVendorChat}
+            className="w-full h-12 bg-neutral-900 hover:bg-black text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+          >
+            <MessageCircle size={18} className="text-emerald-400" />
+            <span>Chat In-App with Verified Vendor</span>
+          </button>
         </div>
 
         {/* ========================================================= */}
         {/* RATINGS & 5-STAR REVIEWS SECTION */}
         {/* ========================================================= */}
-        <div className="bg-white rounded-2xl p-5 border border-linen-border shadow-sm space-y-5">
+        <div className="bg-white rounded-2xl p-5 border border-linen-border shadow-xs hover:shadow-sm transition-all duration-300 space-y-5">
           <div className="flex items-center justify-between border-b border-linen-border pb-4">
             <div>
               <h3 className="text-sm font-bold text-charcoal uppercase tracking-wider">
@@ -450,9 +474,14 @@ export default function ProductDetailClient({
           {/* Review Submission Form */}
           <form
             onSubmit={handleSubmitReview}
-            className="bg-linen-surface rounded-xl p-3.5 border border-linen-border space-y-3"
+            className="bg-linen-surface rounded-2xl p-4 border border-linen-border space-y-3.5 shadow-xs"
           >
-            <h4 className="text-xs font-bold text-charcoal">Write a Review</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-charcoal">Write a Review</h4>
+              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                Verified Shopper Submission
+              </span>
+            </div>
 
             {/* 5 Interactive Star Rating Selector */}
             <div className="flex items-center gap-1.5">
@@ -466,7 +495,7 @@ export default function ProductDetailClient({
                   onClick={() => setRatingInput(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 text-amber-500 hover:scale-110 transition-transform"
+                  className="p-1 text-amber-500 hover:scale-125 transition-transform cursor-pointer"
                   aria-label={`Rate ${star} star`}
                 >
                   <Star
@@ -490,23 +519,23 @@ export default function ProductDetailClient({
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
               placeholder="How was the textile quality, fit accuracy, and craftsmanship?..."
-              className="w-full bg-white border border-linen-border rounded-xl p-3 text-xs text-charcoal focus:outline-none focus:border-terracotta transition shadow-sm resize-none"
+              className="w-full bg-white border border-linen-border rounded-xl p-3 text-xs text-charcoal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition shadow-xs resize-none"
             />
 
             <button
               type="submit"
               disabled={submittingReview || !commentInput.trim()}
-              className="w-full h-10 bg-neutral-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 transition shadow-sm"
+              className="w-full h-11 bg-neutral-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
             >
-              <Send size={13} />
-              <span>{submittingReview ? 'Submitting...' : 'Submit Review'}</span>
+              <Send size={14} />
+              <span>{submittingReview ? 'Publishing Review...' : 'Submit Verified Review'}</span>
             </button>
           </form>
 
           {/* Reviews List */}
           <div className="space-y-4 pt-1">
             {reviews.length === 0 ? (
-              <div className="py-6 text-center text-xs text-neutral-400">
+              <div className="py-8 text-center text-xs text-neutral-400">
                 Be the first to review this handcrafted masterpiece.
               </div>
             ) : (
@@ -524,14 +553,14 @@ export default function ProductDetailClient({
                 return (
                   <div
                     key={rev.id}
-                    className="border-b border-linen-border last:border-b-0 pb-3.5 space-y-1.5"
+                    className="border-b border-linen-border last:border-b-0 pb-4 space-y-1.5 animate-in fade-in duration-300"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-charcoal">
                           {reviewerName}
                         </span>
-                        <span className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                        <span className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-1.5 py-0.2 rounded-full border border-emerald-200">
                           <Check size={10} /> Verified
                         </span>
                       </div>
@@ -564,22 +593,51 @@ export default function ProductDetailClient({
         </div>
       </div>
 
-      {/* 3. Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-linen-border py-3 px-4 shadow-lg">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold text-warmgrey">Total</span>
-            <span className="text-lg font-extrabold text-charcoal">{formattedPrice}</span>
+      {/* 3. Sticky Bottom Action Bar with Trust Signals & Micro-interactions */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-linen-border py-3 px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+        <div className="max-w-4xl mx-auto flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col min-w-[85px]">
+              <span className="text-[10px] uppercase font-bold text-warmgrey">Total Price</span>
+              <span className="text-lg font-black text-charcoal">{formattedPrice}</span>
+            </div>
+
+            {/* Add to Cart Primary Button */}
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 h-13 bg-terracotta hover:bg-terracotta-dark text-white rounded-2xl flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+            >
+              <ShoppingBag size={18} />
+              <span>Add to Cart</span>
+            </button>
+
+            {/* Instant Buy Now Button */}
+            <button
+              onClick={handleBuyNow}
+              className="h-13 px-5 bg-neutral-900 hover:bg-black text-white rounded-2xl flex items-center justify-center gap-1.5 font-bold text-sm shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+            >
+              <Zap size={16} className="text-amber-400" />
+              <span className="hidden sm:inline">Buy Now</span>
+            </button>
           </div>
-          <button
-            onClick={handleAddToCart}
-            className="flex-1 h-13 bg-terracotta text-white rounded-2xl flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:bg-terracotta-dark transition"
-          >
-            <ShoppingBag size={18} />
-            <span>Add to Cart</span>
-          </button>
+
+          {/* Trust Badge Icon & Assurance */}
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 font-medium">
+            <Lock size={12} className="text-emerald-600 flex-shrink-0" />
+            <span>🔒 Secure Encrypted Checkout & 100% Buyer Protection</span>
+          </div>
         </div>
       </div>
+
+      {/* In-App Vendor Chat Modal / Slide-over */}
+      <VendorChatModal
+        isOpen={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+        product={product}
+        vendor={vendor}
+        currentUser={currentUser}
+        sizePassport={sizePassport}
+      />
     </div>
   );
 }

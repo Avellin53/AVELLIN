@@ -68,7 +68,30 @@ export default async function ProductPage({
         .select('*')
         .eq('product_id', id)
         .order('created_at', { ascending: false });
-      initialReviews = fallbackReviews || [];
+      
+      if (fallbackReviews && fallbackReviews.length > 0) {
+        const shopperIds = Array.from(
+          new Set(fallbackReviews.map((r: any) => r.shopper_id).filter(Boolean))
+        );
+        const profileMap: Record<string, string> = {};
+        if (shopperIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', shopperIds);
+          if (profiles) {
+            profiles.forEach((p: any) => {
+              if (p?.id && p?.name) profileMap[p.id] = p.name;
+            });
+          }
+        }
+        initialReviews = fallbackReviews.map((r: any) => ({
+          ...r,
+          profiles: { name: profileMap[r.shopper_id] || 'Verified Shopper' },
+        }));
+      } else {
+        initialReviews = [];
+      }
     }
   } catch (err) {
     console.error('Error fetching reviews:', err);

@@ -360,12 +360,18 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Protected Routes Logic
-  const isProtectedRoute = pathname.startsWith('/browse') || pathname.startsWith('/vendor') || pathname.startsWith('/product')
+  // Protected Routes Logic: ONLY protect routes like /profile, /admin, /cart/checkout, and /vendor
+  // Unauthenticated users must be able to view the homepage, search, and view individual product pages freely.
+  const isProtectedRoute =
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/cart/checkout') ||
+    pathname.startsWith('/vendor')
   
   if (isProtectedRoute && !session) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    url.searchParams.set('redirect', pathname + (request.nextUrl.search || ''))
     return NextResponse.redirect(url)
   }
 

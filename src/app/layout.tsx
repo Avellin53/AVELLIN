@@ -4,10 +4,13 @@ import "./globals.css";
 import { Toaster } from 'sonner';
 import { Toaster as HotToaster } from 'react-hot-toast';
 import AutoLogout from '@/components/auth/AutoLogout';
+import GuestAuthPromptModal from '@/components/auth/GuestAuthPromptModal';
 
 const plusJakarta = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
-  variable: '--font-jakarta'
+  variable: '--font-jakarta',
+  display: 'swap',
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -25,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster position="top-center" />
         <HotToaster position="top-center" toastOptions={{ success: { style: { background: '#059669', color: '#fff', fontWeight: '500' }, iconTheme: { primary: '#fff', secondary: '#059669' } } }} />
         <AutoLogout />
+        <GuestAuthPromptModal />
       </body>
     </html>
   );

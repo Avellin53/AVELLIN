@@ -14,17 +14,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Insert message into database
-    const { error: insertError } = await supabaseAdmin.from('messages').insert({
-      conversation_id: conversationId,
-      sender_id: shopperId,
-      content,
-      created_at: new Date().toISOString()
-    });
+    // 1. Ensure conversation exists in conversations table
+    const { data: existingConv } = await supabaseAdmin
+      .from('conversations')
+      .select('id')
+      .eq('id', conversationId)
+      .maybeSingle();
+
+    if (!existingConv) {
+      await supabaseAdmin.from('conversations').upsert(
+        {
+          id: conversationId,
+          product_id: productId,
+          shopper_id: shopperId,
+          vendor_id: vendorId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+    }
+
+    // 2. Insert message into database
+    const { data: insertedMsg, error: insertError } = await supabaseAdmin
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: shopperId,
+        content,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
     if (insertError) {
       console.error("Failed to insert message:", insertError);
-      return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to send message: ' + insertError.message }, { status: 500 });
     }
 
     // Fetch vendor and product details

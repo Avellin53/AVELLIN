@@ -4,8 +4,9 @@ import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'rea
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, ArrowRight, AlertCircle, RefreshCw, Lock } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
+import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 
 // Reusable Empty Cart UI
@@ -372,18 +373,34 @@ function CartContent() {
               </div>
             </div>
 
-            {/* Checkout Action Button */}
+            {/* Checkout Action Button with Auth Protection & Micro-interactions */}
             <button
-              onClick={() => {
+              onClick={async () => {
+                const supabase = createClient();
+                const {
+                  data: { session },
+                } = await supabase.auth.getSession();
+
+                if (!session) {
+                  router.push('/login?redirect=/cart');
+                  return;
+                }
+
                 toast.success('Proceeding to checkout...', {
                   description: `Order Total: ₦${finalTotal.toLocaleString()} (Includes ₦${tipAmount.toLocaleString()} artisan tip)`,
                 });
               }}
-              className="w-full bg-neutral-900 text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-lg hover:bg-black transition mt-2"
+              className="w-full bg-neutral-900 hover:bg-black text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] mt-2 cursor-pointer"
             >
               <span>Proceed to Checkout</span>
               <ArrowRight size={18} />
             </button>
+
+            {/* Trust Badge Signal */}
+            <div className="flex items-center justify-center gap-1.5 text-xs text-neutral-500 font-medium mt-3">
+              <Lock size={13} className="text-emerald-600" />
+              <span>🔒 256-Bit Encrypted Secure Checkout</span>
+            </div>
           </div>
         ) : (
           <EmptyCartUI />

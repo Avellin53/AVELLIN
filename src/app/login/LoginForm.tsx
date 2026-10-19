@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { createClient } from '@/utils/supabase/client';
@@ -14,6 +14,8 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +44,9 @@ export default function LoginForm() {
     await trackSuccessfulLogin(email);
 
     toast.success('Welcome back to AVELLIN!');
-    if (data.user.email === 'fortuneonyeagwaziam@gmail.com') {
+    if (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
+      router.push(redirectParam);
+    } else if (data.user.email === 'fortuneonyeagwaziam@gmail.com') {
       router.push('/admin');
     } else {
       router.push('/home');

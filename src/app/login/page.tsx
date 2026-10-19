@@ -26,7 +26,9 @@ export default function LoginPage() {
             </p>
           </div>
           
-          <LoginForm />
+          <React.Suspense fallback={<div className="h-64 flex items-center justify-center text-xs text-neutral-400">Loading sign in...</div>}>
+            <LoginForm />
+          </React.Suspense>
         </div>
 
         {/* Fashion Editorial Visual Showcase Column (Right on Desktop, Stacked on Mobile) */}

@@ -31,14 +31,20 @@ export default function LandingPage() {
 
           <div className="hidden sm:flex items-center gap-4 pt-4">
             <Link 
+              href="/home"
+              className="px-8 bg-neutral-900 text-white rounded-xl h-[52px] flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:bg-black transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98]"
+            >
+              Explore Collection
+            </Link>
+            <Link 
               href="/register"
-              className="px-8 bg-terracotta text-white rounded-xl h-[52px] flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:bg-terracotta-dark transition transform active:scale-[0.98]"
+              className="px-8 bg-terracotta text-white rounded-xl h-[52px] flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:bg-terracotta-dark transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Create Account
             </Link>
             <Link 
               href="/login"
-              className="px-8 bg-white text-charcoal border border-linen-border rounded-xl h-[52px] flex items-center justify-center font-bold text-sm hover:bg-linen-surface transition transform active:scale-[0.98]"
+              className="px-8 bg-white text-charcoal border border-linen-border rounded-xl h-[52px] flex items-center justify-center font-bold text-sm hover:bg-linen-surface transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98]"
             >
               Sign In
             </Link>
@@ -110,17 +116,25 @@ export default function LandingPage() {
       <div className="fixed sm:hidden bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-neutral-200 p-4 pb-7 z-50 flex flex-col gap-2.5 shadow-[0_-10px_40px_rgba(0,0,0,0.06)]">
         <div className="flex flex-col gap-2.5">
           <Link 
-            href="/register"
-            className="w-full bg-terracotta text-white rounded-xl h-[48px] flex items-center justify-center gap-2 font-semibold text-sm shadow-md hover:bg-terracotta-dark transition"
+            href="/home"
+            className="w-full bg-neutral-900 text-white rounded-xl h-[48px] flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:bg-black transition-all duration-300"
           >
-            Create Account
+            Explore Marketplace (Guest)
           </Link>
-          <Link 
-            href="/login"
-            className="w-full bg-white text-charcoal border border-linen-border rounded-xl h-[48px] flex items-center justify-center font-semibold text-sm hover:bg-linen-surface transition"
-          >
-            Sign In
-          </Link>
+          <div className="grid grid-cols-2 gap-2">
+            <Link 
+              href="/register"
+              className="w-full bg-terracotta text-white rounded-xl h-[44px] flex items-center justify-center gap-2 font-semibold text-xs shadow-sm hover:bg-terracotta-dark transition-all duration-300"
+            >
+              Create Account
+            </Link>
+            <Link 
+              href="/login"
+              className="w-full bg-white text-charcoal border border-linen-border rounded-xl h-[44px] flex items-center justify-center font-semibold text-xs hover:bg-linen-surface transition-all duration-300"
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
         
         <div className="text-center pt-1">

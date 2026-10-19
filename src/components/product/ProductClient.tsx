@@ -1,21 +1,34 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ArrowLeft, Share2, Heart, BadgeCheck, Sparkles, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Share2, Heart, BadgeCheck, Sparkles, ShoppingBag, Lock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product } from '@/types';
 import MessageVendorButton from '@/components/product/MessageVendorButton';
 import { useCartStore } from '@/store/cartStore';
+import { useAuthModalStore } from '@/store/authModalStore';
+import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 
 export default function ProductClient({ product, crossSell }: { product: Product, crossSell: Product[] }) {
   const [isSaved, setIsSaved] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>(product.sizingData?.recommendedSize || product.sizes?.[0] || 'M');
+  const openAuthModal = useAuthModalStore((state) => state.openAuthModal);
 
   const addToCart = useCartStore((state) => state.addToCart);
 
-  const handleAddToBag = () => {
+  const handleAddToBag = async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to add items to your cart and checkout securely.',
+        itemTitle: product.title,
+      });
+      return;
+    }
     addToCart(product);
     toast.success("Item added to bag");
   };
@@ -57,7 +70,7 @@ export default function ProductClient({ product, crossSell }: { product: Product
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-bold uppercase tracking-widest text-charcoal">{product.vendor?.name} • {product.vendor?.location}</span>
-            {product.vendor?.isVerified && <BadgeCheck size={14} className="text-palm" />}
+            <BadgeCheck size={15} className="text-emerald-600 fill-emerald-100 flex-shrink-0" />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-charcoal leading-tight">{product.title}</h1>
@@ -198,20 +211,26 @@ export default function ProductClient({ product, crossSell }: { product: Product
 
       </div>
 
-      {/* 7. Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 w-full max-w-[420px] bg-linen/90 backdrop-blur-lg border-t border-linen-border p-4 pb-8 z-50 flex items-center gap-4">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-warmgrey uppercase tracking-wide">Total</span>
-          <span className="text-lg font-extrabold text-charcoal">{product.priceFormatted}</span>
-          <span className="text-[10px] font-bold text-ochre">Size {selectedSize} selected</span>
+      {/* 7. Sticky Bottom Action Bar with Trust Signals */}
+      <div className="fixed bottom-0 w-full max-w-[420px] bg-linen/95 backdrop-blur-lg border-t border-linen-border p-4 pb-8 z-50 flex flex-col gap-2 shadow-lg">
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-warmgrey uppercase tracking-wide">Total</span>
+            <span className="text-lg font-extrabold text-charcoal">{product.priceFormatted}</span>
+            <span className="text-[10px] font-bold text-ochre">Size {selectedSize} selected</span>
+          </div>
+          <button 
+            onClick={handleAddToBag}
+            className="flex-1 bg-terracotta hover:bg-terracotta-dark text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+          >
+            <ShoppingBag size={18} />
+            <span>Add to Bag</span>
+          </button>
         </div>
-        <button 
-          onClick={handleAddToBag}
-          className="flex-1 bg-terracotta text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-lg shadow-terracotta/20 hover:bg-terracotta-dark transition"
-        >
-          <ShoppingBag size={18} />
-          Add to Bag
-        </button>
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 font-medium">
+          <Lock size={12} className="text-emerald-600" />
+          <span>🔒 Secure Encrypted Checkout</span>
+        </div>
       </div>
 
     </div>
