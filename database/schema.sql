@@ -16,6 +16,7 @@ create table public.profiles (
   loyalty_points integer default 0,
   vip_tier text default 'Member',
   addresses jsonb default '[]'::jsonb,
+  state text default 'Lagos',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -82,6 +83,8 @@ create table public.products (
   stock integer default 1,
   is_flash_sale boolean default false,
   flash_sale_end timestamp with time zone default null,
+  views_count integer default 0,
+  cart_adds_count integer default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -231,4 +234,70 @@ create policy "Service role can manage all notifications"
   on public.notifications for all
   using ( true )
   with check ( true );
+
+-- ==============================================================================
+-- 7. orders table
+-- ==============================================================================
+create table if not exists public.orders (
+  id uuid default gen_random_uuid() primary key,
+  shopper_id uuid references auth.users(id) on delete cascade not null,
+  vendor_id uuid references public.profiles(id) on delete set null,
+  product_id uuid references public.products(id) on delete set null,
+  status text default 'pending',
+  split_payment boolean default false,
+  deposit_paid boolean default false,
+  balance_paid boolean default false,
+  deposit_amount numeric default 0,
+  balance_amount numeric default 0,
+  stage text default 'Order Placed',
+  delivered_at timestamp with time zone default null,
+  dispute_status text default 'none',
+  dispute_reason text default null,
+  total_amount numeric default 0,
+  items jsonb default '[]'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.orders enable row level security;
+
+create policy "Shoppers can view own orders"
+  on public.orders for select
+  using ( auth.uid() = shopper_id );
+
+create policy "Vendors can view assigned orders"
+  on public.orders for select
+  using ( auth.uid() = vendor_id );
+
+create policy "Shoppers can create orders"
+  on public.orders for insert
+  with check ( auth.uid() = shopper_id );
+
+create policy "Shoppers and Vendors can update orders"
+  on public.orders for update
+  using ( auth.uid() = shopper_id or auth.uid() = vendor_id )
+  with check ( auth.uid() = shopper_id or auth.uid() = vendor_id );
+
+-- ==============================================================================
+-- 8. reviews table
+-- ==============================================================================
+create table if not exists public.reviews (
+  id uuid default gen_random_uuid() primary key,
+  product_id uuid references public.products(id) on delete cascade not null,
+  shopper_id uuid references auth.users(id) on delete cascade not null,
+  rating integer not null check (rating >= 1 and rating <= 5),
+  comment text not null,
+  video_url text default null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.reviews enable row level security;
+
+create policy "Anyone can read reviews"
+  on public.reviews for select
+  using ( true );
+
+create policy "Authenticated users can create reviews"
+  on public.reviews for insert
+  with check ( auth.uid() = shopper_id );
+
 

@@ -8,10 +8,12 @@ export async function submitReviewAction({
   productId,
   rating,
   comment,
+  videoUrl,
 }: {
   productId: string;
   rating: number;
   comment: string;
+  videoUrl?: string | null;
 }) {
   try {
     if (!productId || !comment?.trim() || !rating) {
@@ -51,6 +53,7 @@ export async function submitReviewAction({
         shopper_id: user.id,
         rating: validatedRating,
         comment: cleanedComment,
+        video_url: videoUrl || null,
         created_at: new Date().toISOString(),
       })
       .select()

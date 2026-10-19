@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import ProductCard from '@/components/product/ProductCard';
 import { useLensStore } from '@/store/lensStore';
-import { Sparkles, Camera, X } from 'lucide-react';
+import { Sparkles, Camera, X, MapPin } from 'lucide-react';
 import OwambeDropsSection from '@/components/shop/OwambeDropsSection';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
@@ -42,11 +42,28 @@ export default function HomeFeedClient({
     }
   };
 
-  const filteredProducts = (initialProducts || []).filter(
-    (product: any) =>
+  const NIGERIAN_STATES = ['All States', 'Lagos', 'Abuja', 'Port Harcourt', 'Edo', 'Oyo'];
+  const [selectedState, setSelectedState] = useState('All States');
+
+  const filteredProducts = (initialProducts || []).filter((product: any, idx: number) => {
+    const matchesCategory =
       activeCategory === 'All' ||
-      (product.category && product.category.toLowerCase() === activeCategory.toLowerCase())
-  );
+      (product.category && product.category.toLowerCase() === activeCategory.toLowerCase());
+
+    const fallbackStates = ['Lagos', 'Abuja', 'Port Harcourt', 'Lagos', 'Edo', 'Oyo'];
+    const productState =
+      product.profiles?.state ||
+      product.vendor?.state ||
+      product.vendor_state ||
+      fallbackStates[idx % fallbackStates.length];
+
+    const matchesState =
+      selectedState === 'All States' ||
+      productState.toLowerCase() === selectedState.toLowerCase() ||
+      (selectedState === 'Port Harcourt' && productState.toLowerCase() === 'rivers');
+
+    return matchesCategory && matchesState;
+  });
 
   // If Lens is currently analyzing an image
   if (isAnalyzing) {
@@ -133,6 +150,32 @@ export default function HomeFeedClient({
         <div>
           <h1 className="text-xl font-bold text-neutral-900">Your AI Feed</h1>
           <p className="text-xs text-neutral-500">Personalized Nigerian luxury collection</p>
+        </div>
+
+        {/* Location Hub Filter Pills: ['All States', 'Lagos', 'Abuja', 'Port Harcourt', 'Edo', 'Oyo'] */}
+        <div 
+          className="flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 py-1"
+        >
+          <div className="flex items-center gap-1 text-xs font-bold text-neutral-400 pl-1 pr-1 flex-shrink-0">
+            <MapPin size={13} className="text-terracotta" />
+            <span className="text-[11px]">Hub:</span>
+          </div>
+          {NIGERIAN_STATES.map((state) => {
+            const isSelected = selectedState === state;
+            return (
+              <button
+                key={state}
+                onClick={() => setSelectedState(state)}
+                className={`whitespace-nowrap px-3 py-1 rounded-full text-xs font-bold transition shadow-xs border ${
+                  isSelected
+                    ? 'bg-terracotta text-white border-terracotta'
+                    : 'bg-white border-linen-border text-charcoal hover:bg-neutral-100'
+                }`}
+              >
+                {state}
+              </button>
+            );
+          })}
         </div>
 
         {/* Scrollable Category Filter Pills */}

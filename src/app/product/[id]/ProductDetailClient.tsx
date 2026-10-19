@@ -27,6 +27,7 @@ import { useAuthModalStore } from '@/store/authModalStore';
 import { submitReviewAction } from '@/app/actions/reviews';
 import { toggleFollowVendorAction } from '@/app/actions/follows';
 import VendorChatModal from '@/components/chat/VendorChatModal';
+import ReviewForm from '@/components/ReviewForm';
 import { toast } from 'sonner';
 
 interface Product {
@@ -48,6 +49,7 @@ interface Review {
   shopper_id?: string;
   rating: number;
   comment: string;
+  video_url?: string | null;
   created_at: string;
   profiles?: {
     name?: string;
@@ -548,66 +550,22 @@ export default function ProductDetailClient({
             </div>
           </div>
 
-          {/* Review Submission Form */}
-          <form
-            onSubmit={handleSubmitReview}
-            className="bg-linen-surface rounded-2xl p-4 border border-linen-border space-y-3.5 shadow-xs"
-          >
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-charcoal">Write a Review</h4>
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                Verified Shopper Submission
-              </span>
-            </div>
-
-            {/* 5 Interactive Star Rating Selector */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-neutral-500 font-medium mr-1">
-                Your Rating:
-              </span>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  type="button"
-                  key={star}
-                  onClick={() => setRatingInput(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 text-amber-500 hover:scale-125 transition-transform cursor-pointer"
-                  aria-label={`Rate ${star} star`}
-                >
-                  <Star
-                    size={20}
-                    fill={
-                      (hoverRating || ratingInput) >= star
-                        ? 'currentColor'
-                        : 'none'
-                    }
-                  />
-                </button>
-              ))}
-              <span className="text-xs font-bold text-charcoal ml-2">
-                {ratingInput} / 5
-              </span>
-            </div>
-
-            {/* Textarea for comment */}
-            <textarea
-              rows={3}
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
-              placeholder="How was the textile quality, fit accuracy, and craftsmanship?..."
-              className="w-full bg-white border border-linen-border rounded-xl p-3 text-xs text-charcoal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition shadow-xs resize-none"
-            />
-
-            <button
-              type="submit"
-              disabled={submittingReview || !commentInput.trim()}
-              className="w-full h-11 bg-neutral-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all duration-300 shadow-sm hover:shadow transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
-            >
-              <Send size={14} />
-              <span>{submittingReview ? 'Publishing Review...' : 'Submit Verified Review'}</span>
-            </button>
-          </form>
+          {/* Review Submission Form with Video Upload */}
+          <ReviewForm
+            productId={product.id}
+            onReviewSubmitted={(newReview) => {
+              setReviews((prev) => [newReview, ...prev]);
+              router.refresh();
+            }}
+            currentUser={currentUser || null}
+            onRequireAuth={() =>
+              openAuthModal({
+                redirectUrl: `/product/${product.id}`,
+                actionMessage: 'Sign in to share your verified review and video for this piece.',
+                itemTitle: product.title,
+              })
+            }
+          />
 
           {/* Reviews List */}
           <div className="space-y-4 pt-1">
@@ -630,7 +588,7 @@ export default function ProductDetailClient({
                 return (
                   <div
                     key={rev.id}
-                    className="border-b border-linen-border last:border-b-0 pb-4 space-y-1.5 animate-in fade-in duration-300"
+                    className="border-b border-linen-border last:border-b-0 pb-4 space-y-2 animate-in fade-in duration-300"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -659,9 +617,22 @@ export default function ProductDetailClient({
                       ))}
                     </div>
 
-                    <p className="text-xs text-neutral-600 leading-relaxed pt-0.5">
-                      {rev.comment}
-                    </p>
+                    {/* Review Comment & Compact HTML5 Video */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-0.5 items-start">
+                      {rev.video_url && (
+                        <div className="flex-shrink-0">
+                          <video
+                            controls
+                            playsInline
+                            src={rev.video_url}
+                            className="w-32 h-44 rounded-xl object-cover bg-black shadow-xs"
+                          />
+                        </div>
+                      )}
+                      <p className="text-xs text-neutral-600 leading-relaxed pt-0.5 flex-1">
+                        {rev.comment}
+                      </p>
+                    </div>
                   </div>
                 );
               })

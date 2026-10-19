@@ -83,7 +83,149 @@ export async function POST(request: Request) {
       if (text === '/start') {
         await sendMessage(
           chatId, 
-          "Welcome to the AVELLIN Vendor Portal! 🌟\n\nPlease reply with your registered vendor email address to authenticate your account and start uploading premium wears."
+          "Welcome to the AVELLIN Vendor Portal! 🌟\n\nPlease reply with your registered vendor email address to authenticate your account and start uploading premium wears.\n\nCommands:\n• `/stage <order_id> <stage_name>` - Update customer tracking\n• `/analytics` or `/stats` - View views, cart adds & conversion rate"
+        );
+        return NextResponse.json({ success: true });
+      }
+
+      // Handle Vendor Analytics (/analytics or /stats)
+      if (text === '/analytics' || text === '/stats') {
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        const { data: vendorProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('id, name')
+          .eq('telegram_chat_id', chatId.toString())
+          .maybeSingle();
+
+        if (!vendorProfile) {
+          await sendMessage(chatId, "⚠️ Please authenticate first by sending your registered vendor email address.");
+          return NextResponse.json({ success: true });
+        }
+
+        const { data: products } = await supabaseAdmin
+          .from('products')
+          .select('views_count, cart_adds_count')
+          .eq('vendor_id', vendorProfile.id);
+
+        let totalViews = 0;
+        let totalCartAdds = 0;
+
+        if (products && products.length > 0) {
+          products.forEach((p: any) => {
+            totalViews += Number(p.views_count) || 0;
+            totalCartAdds += Number(p.cart_adds_count) || 0;
+          });
+        }
+
+        const conversionRate = ((totalCartAdds / (totalViews || 1)) * 100).toFixed(1);
+
+        const analyticsMessage = `📊 *AVELLIN Brand Performance*
+
+👁️ Total Product Views: ${totalViews.toLocaleString()}
+🛒 Total Cart Additions: ${totalCartAdds.toLocaleString()}
+🛍️ Conversion Rate: ${conversionRate}%
+
+💡 *Tip:* If items have high views but 0 cart adds, consider adjusting your pricing or uploading clearer photos in daylight!`;
+
+        await sendMessage(chatId, analyticsMessage);
+        return NextResponse.json({ success: true });
+      }
+
+      // Handle Stage Progression (/stage <order_id> <stage_name>)
+      if (text.startsWith('/stage')) {
+        const parts = text.trim().split(/\s+/);
+        if (parts.length < 3) {
+          await sendMessage(
+            chatId,
+            "⚠️ Invalid format. Use:\n`/stage <order_id> <stage_name>`\n\nValid stages: `Order Placed`, `Fabric Sourced`, `Sewing in Progress`, `Ready for Dispatch`, `Delivered`"
+          );
+          return NextResponse.json({ success: true });
+        }
+
+        const rawOrderId = parts[1];
+        const stageName = parts.slice(2).join(' ');
+
+        const validStages = [
+          'Order Placed',
+          'Fabric Sourced',
+          'Sewing in Progress',
+          'Ready for Dispatch',
+          'Delivered',
+        ];
+
+        const matchedStage = validStages.find(
+          (s) => s.toLowerCase() === stageName.toLowerCase()
+        ) || stageName;
+
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        const { data: vendorProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('id, name')
+          .eq('telegram_chat_id', chatId.toString())
+          .maybeSingle();
+
+        if (!vendorProfile) {
+          await sendMessage(chatId, "⚠️ Please authenticate first by sending your registered vendor email address.");
+          return NextResponse.json({ success: true });
+        }
+
+        const cleanOrderId = rawOrderId.replace(/^#/, '');
+
+        // Search for order
+        const { data: orderData } = await supabaseAdmin
+          .from('orders')
+          .select('*')
+          .or(`id.eq.${cleanOrderId}`)
+          .maybeSingle();
+
+        let finalOrder = orderData;
+        if (!finalOrder) {
+          const { data: fallbackList } = await supabaseAdmin
+            .from('orders')
+            .select('*')
+            .limit(20);
+          
+          finalOrder = fallbackList?.find((o: any) => o.id.includes(cleanOrderId)) || null;
+        }
+
+        if (!finalOrder) {
+          await sendMessage(chatId, `⚠️ Order \`${rawOrderId}\` could not be found.`);
+          return NextResponse.json({ success: true });
+        }
+
+        if (finalOrder.vendor_id && finalOrder.vendor_id !== vendorProfile.id) {
+          await sendMessage(chatId, `⛔ Unauthorized: Order \`${rawOrderId}\` is not assigned to your atelier.`);
+          return NextResponse.json({ success: true });
+        }
+
+        const updatePayload: any = { stage: matchedStage };
+        if (matchedStage.toLowerCase() === 'delivered') {
+          updatePayload.delivered_at = new Date().toISOString();
+        }
+
+        const { error: updateError } = await supabaseAdmin
+          .from('orders')
+          .update(updatePayload)
+          .eq('id', finalOrder.id);
+
+        if (updateError) {
+          await sendMessage(chatId, `⚠️ Failed to update order: ${updateError.message}`);
+          return NextResponse.json({ success: true });
+        }
+
+        await sendMessage(
+          chatId,
+          `✅ Order \`${rawOrderId}\` updated to "${matchedStage}". The customer's tracker is now updated live!`
         );
         return NextResponse.json({ success: true });
       } else if (text.includes('@')) {

@@ -7,12 +7,14 @@ import { createClient } from '@/utils/supabase/client';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import ColorAnalysisCard from '@/components/profile/ColorAnalysisCard';
+import { useCartStore } from '@/store/cartStore';
 import { toast } from 'sonner';
 
 export default function AIFitPage() {
   const router = useRouter();
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState('');
+  const cartItems = useCartStore((state) => state.cartItems || []);
 
   // Load from localStorage or start fresh (no legacy hardcoded messages)
   const [initialMessages] = useState<UIMessage[]>(() => {
@@ -32,6 +34,13 @@ export default function AIFitPage() {
     return [];
   });
 
+  const sanitizedCart = cartItems.map((item: any) => ({
+    title: item.title,
+    category: item.category,
+    description: item.description,
+    price: item.price,
+  }));
+
   const {
     messages,
     sendMessage,
@@ -41,6 +50,9 @@ export default function AIFitPage() {
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: '/api/chat',
+      body: {
+        cartItems: sanitizedCart,
+      },
     }),
     onError: (error: any) => {
       console.error('AI STREAM ERROR: ', error);
@@ -59,7 +71,14 @@ export default function AIFitPage() {
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!input.trim() || isLoading) return;
-    sendMessage({ text: input });
+    sendMessage(
+      { text: input },
+      {
+        body: {
+          cartItems: sanitizedCart,
+        },
+      }
+    );
     setInput('');
   };
 

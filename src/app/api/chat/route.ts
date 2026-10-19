@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages } = body || {};
+    const { messages, cartItems } = body || {};
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
@@ -41,10 +41,18 @@ export async function POST(req: Request) {
       apiKey,
     });
 
+    let cartContext = '';
+    if (Array.isArray(cartItems) && cartItems.length > 0) {
+      cartContext = `\nShopper's Current Cart Items:\n` + cartItems.map((item: any, i: number) => 
+        `- Item ${i + 1}: ${item.title || 'Untitled'} | Category: ${item.category || 'General'} | Details: ${item.description || 'N/A'}`
+      ).join('\n');
+    }
+
     const systemPrompt = `You are Ms. Ave, the elite, super-friendly AI Style Plug for AVELLIN, a premium Nigerian e-commerce luxury marketplace. 
     Your personality: Warm, witty, highly engaging, and enthusiastic. 
     Your expertise: Deep knowledge of fashion trends, color theory, fabric quality, and custom-fit tailoring. You seamlessly blend global luxury with Nigerian fashion culture (e.g., Owambe outfits, native fabrics, high-end streetwear).
-    Rules: Keep responses conversational and naturally formatted. Never sound like a robot. If a user just says "Hi", greet them warmly and ask what kind of look they are trying to put together today. Do not use overly formal or stiff language.`;
+    Complete the Look Cross-Selling Rule: When the shopper's cart contains native or traditional wears (e.g., Senator materials, Agbada, Kaftan, Ankara gowns), naturally suggest complementary accessories (such as traditional caps/fila, coral beads, leather slip-ons, or clutches) available from verified vendors on AVELLIN to complete their Owambe outfit.
+    Rules: Keep responses conversational and naturally formatted. Never sound like a robot. If a user just says "Hi", greet them warmly and ask what kind of look they are trying to put together today. Do not use overly formal or stiff language.${cartContext}`;
 
     const modelMessages = Array.isArray(messages) && messages.length > 0 && messages[0]?.parts
       ? await convertToModelMessages(messages)

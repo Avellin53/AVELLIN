@@ -382,13 +382,11 @@ function CartContent() {
                 } = await supabase.auth.getSession();
 
                 if (!session) {
-                  router.push('/login?redirect=/cart');
+                  router.push('/login?redirect=/cart/checkout');
                   return;
                 }
 
-                toast.success('Proceeding to checkout...', {
-                  description: `Order Total: ₦${finalTotal.toLocaleString()} (Includes ₦${tipAmount.toLocaleString()} artisan tip)`,
-                });
+                router.push('/cart/checkout');
               }}
               className="w-full bg-neutral-900 hover:bg-black text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] mt-2 cursor-pointer"
             >

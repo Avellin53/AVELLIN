@@ -16,6 +16,13 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "AVELLIN | African Fashion & Beauty",
   description: "AI-powered fashion and beauty marketplace for the African market.",
+  manifest: "/manifest.json",
+  themeColor: "#171717",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AVELLIN",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -29,6 +36,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <HotToaster position="top-center" toastOptions={{ success: { style: { background: '#059669', color: '#fff', fontWeight: '500' }, iconTheme: { primary: '#fff', secondary: '#059669' } } }} />
         <AutoLogout />
         <GuestAuthPromptModal />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function(e) {
+                    console.warn('PWA service worker registration notice:', e);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
