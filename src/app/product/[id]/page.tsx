@@ -103,6 +103,8 @@ export default async function ProductPage({
   } = await supabase.auth.getUser();
 
   let userProfile: any = null;
+  let initialIsFollowing = false;
+
   if (user) {
     const { data: pData } = await supabase
       .from('profiles')
@@ -110,6 +112,23 @@ export default async function ProductPage({
       .eq('id', user.id)
       .maybeSingle();
     userProfile = pData;
+
+    const targetVendorId = product.vendor_id || vendor?.id;
+    if (targetVendorId) {
+      try {
+        const { data: followRecord } = await supabase
+          .from('vendor_follows')
+          .select('id')
+          .eq('shopper_id', user.id)
+          .eq('vendor_id', targetVendorId)
+          .maybeSingle();
+        if (followRecord) {
+          initialIsFollowing = true;
+        }
+      } catch (err) {
+        console.warn('Follow record check warning:', err);
+      }
+    }
   }
 
   return (
@@ -119,6 +138,7 @@ export default async function ProductPage({
       initialReviews={initialReviews}
       currentUser={user ? { id: user.id, email: user.email } : null}
       sizePassport={userProfile?.size_passport || null}
+      initialIsFollowing={initialIsFollowing}
     />
   );
 }

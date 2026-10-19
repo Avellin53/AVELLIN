@@ -6,18 +6,28 @@ export const maxDuration = 45;
 
 export async function POST(req: Request) {
   try {
-    const { image } = await req.json();
-
-    if (!image) {
+    let body: any;
+    try {
+      body = await req.json();
+    } catch (parseErr: any) {
       return new Response(
-        JSON.stringify({ error: 'Image data is required' }),
+        JSON.stringify({ error: `Invalid JSON payload: ${parseErr?.message || 'Failed to parse JSON body'}` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { image } = body || {};
+
+    if (!image || typeof image !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Image data (Base64 string) is required in the JSON payload.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
-      console.error('[/api/lens] Error: Neither GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY is configured in environment variables.');
+      console.error('[/api/lens] Error: GEMINI_API_KEY is not configured in environment variables.');
       return new Response(
         JSON.stringify({ error: 'GEMINI_API_KEY is missing in environment variables.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -39,30 +49,55 @@ export async function POST(req: Request) {
         mimeType = match[1];
       }
       base64Clean = parts[1];
+    } else if (image.startsWith('data:')) {
+      const commaIdx = image.indexOf(',');
+      if (commaIdx !== -1) {
+        base64Clean = image.slice(commaIdx + 1);
+      }
     }
 
-    // Call Gemini 2.5 Pro via AI SDK
-    const { text } = await generateText({
-      model: google('gemini-2.5-pro'),
-      messages: [
-        {
-          role: 'user',
-          content: [
+    // Call Gemini with candidate models (gemini-2.5-pro, gemini-1.5-flash-latest, with gemini-flash-latest fallback)
+    const candidateModels = ['gemini-2.5-pro', 'gemini-1.5-flash-latest', 'gemini-flash-latest'];
+    let textResult = '';
+    let lastError: any = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        const { text } = await generateText({
+          model: google(modelName),
+          messages: [
             {
-              type: 'text',
-              text: 'You are a fashion extraction API. Analyze this clothing image and return exactly THREE distinct search keywords separated by spaces (e.g., "red hoodie cotton", "black leather watch", "blue denim jacket"). Do not include any other text.',
-            },
-            {
-              type: 'image',
-              image: Buffer.from(base64Clean, 'base64'),
-              mediaType: mimeType,
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'You are a fashion extraction API for AVELLIN African luxury marketplace. Analyze this clothing image and return exactly THREE distinct search keywords separated by spaces (e.g., "red hoodie cotton", "black agbada embroidery", "blue denim kaftan"). Do not include any other text, quotes, or markdown formatting.',
+                },
+                {
+                  type: 'image',
+                  image: Buffer.from(base64Clean, 'base64'),
+                  mediaType: mimeType,
+                },
+              ],
             },
           ],
-        },
-      ],
-    });
+        });
 
-    const cleanedText = (text || '')
+        if (text) {
+          textResult = text;
+          break;
+        }
+      } catch (err: any) {
+        console.warn(`[/api/lens] Model ${modelName} call failed, trying next:`, err?.message || err);
+        lastError = err;
+      }
+    }
+
+    if (!textResult && lastError) {
+      throw lastError;
+    }
+
+    const cleanedText = (textResult || '')
       .replace(/[^\w\s-]/g, '')
       .trim()
       .toLowerCase();
@@ -125,16 +160,11 @@ export async function POST(req: Request) {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
-    console.error('[/api/lens] Error processing visual search:', error?.message || error, {
-      name: error?.name,
-      stack: error?.stack,
-      cause: error?.cause,
-      status: error?.status || error?.statusCode,
-      data: error?.data,
-    });
+    const errorMessage = error?.message || (typeof error === 'string' ? error : 'Failed to analyze photo with Google Gemini');
+    console.error('[/api/lens] Visual search error:', errorMessage, error);
     return new Response(
       JSON.stringify({
-        error: error?.message || 'Failed to analyze photo with Google Gemini',
+        error: errorMessage,
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );

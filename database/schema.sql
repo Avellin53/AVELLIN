@@ -174,3 +174,61 @@ create policy "Admins can update security logs"
       select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'
     )
   );
+
+-- ==============================================================================
+-- 5. vendor_follows table
+-- ==============================================================================
+create table if not exists public.vendor_follows (
+  id uuid default gen_random_uuid() primary key,
+  shopper_id uuid references auth.users on delete cascade not null,
+  vendor_id uuid references public.profiles on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(shopper_id, vendor_id)
+);
+
+alter table public.vendor_follows enable row level security;
+
+create policy "Users can view their own follows"
+  on public.vendor_follows for select
+  using ( auth.uid() = shopper_id );
+
+create policy "Users can insert their own follows"
+  on public.vendor_follows for insert
+  with check ( auth.uid() = shopper_id );
+
+create policy "Users can delete their own follows"
+  on public.vendor_follows for delete
+  using ( auth.uid() = shopper_id );
+
+-- ==============================================================================
+-- 6. notifications table
+-- ==============================================================================
+create table if not exists public.notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users on delete cascade not null,
+  message text not null,
+  type text default 'system',
+  read boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.notifications enable row level security;
+
+create policy "Users can view their own notifications"
+  on public.notifications for select
+  using ( auth.uid() = user_id );
+
+create policy "Users can update their own notifications"
+  on public.notifications for update
+  using ( auth.uid() = user_id )
+  with check ( auth.uid() = user_id );
+
+create policy "Users can insert their own notifications"
+  on public.notifications for insert
+  with check ( auth.uid() = user_id );
+
+create policy "Service role can manage all notifications"
+  on public.notifications for all
+  using ( true )
+  with check ( true );
+

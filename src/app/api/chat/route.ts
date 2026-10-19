@@ -5,13 +5,27 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    let body: any;
+    try {
+      body = await req.json();
+    } catch (parseErr: any) {
+      return new Response(
+        JSON.stringify({
+          error: `Invalid JSON payload: ${parseErr?.message || 'Failed to parse JSON body'}`,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
-    // Check if GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is configured
+    const { messages } = body || {};
+
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      console.error("[/api/chat] Error: Neither GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY is defined in environment variables.");
+      console.error("[/api/chat] Error: GEMINI_API_KEY is not configured in environment variables.");
       return new Response(
         JSON.stringify({
           error: 'GEMINI_API_KEY is missing in environment variables.',
@@ -36,44 +50,40 @@ export async function POST(req: Request) {
       ? await convertToModelMessages(messages)
       : messages;
 
-    try {
-      const result = await streamText({
-        model: google('gemini-2.5-pro'),
-        system: systemPrompt,
-        messages: modelMessages,
-        onError({ error }) {
-          console.error('[/api/chat] AI stream generation error:', error);
-        },
-      });
+    // Candidate models: gemini-2.5-pro, gemini-1.5-flash-latest, fallback to gemini-flash-latest
+    const candidateModels = ['gemini-2.5-pro', 'gemini-1.5-flash-latest', 'gemini-flash-latest'];
+    let streamResult: any = null;
+    let lastError: any = null;
 
-      return result.toUIMessageStreamResponse();
-    } catch (streamError: any) {
-      console.error('[/api/chat] AI stream initialization error:', streamError?.message || streamError, {
-        name: streamError?.name,
-        stack: streamError?.stack,
-        cause: streamError?.cause,
-        status: streamError?.status || streamError?.statusCode,
-      });
-      return new Response(
-        JSON.stringify({
-          error: streamError?.message || 'AI streaming failed',
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+    for (const modelName of candidateModels) {
+      try {
+        const result = await streamText({
+          model: google(modelName),
+          system: systemPrompt,
+          messages: modelMessages,
+          onError({ error }) {
+            console.error(`[/api/chat] Model ${modelName} stream error:`, error);
+          },
+        });
+        streamResult = result;
+        break;
+      } catch (streamError: any) {
+        console.warn(`[/api/chat] Stream init failed with model ${modelName}:`, streamError?.message || streamError);
+        lastError = streamError;
+      }
     }
+
+    if (!streamResult) {
+      throw (lastError || new Error('Failed to initialize AI stream with Gemini models.'));
+    }
+
+    return streamResult.toUIMessageStreamResponse();
   } catch (error: any) {
-    console.error('[/api/chat] Request processing error:', error?.message || error, {
-      name: error?.name,
-      stack: error?.stack,
-      cause: error?.cause,
-      status: error?.status || error?.statusCode,
-    });
+    const errorMessage = error?.message || (typeof error === 'string' ? error : 'Failed to process AI chat request');
+    console.error('[/api/chat] Request error:', errorMessage, error);
     return new Response(
       JSON.stringify({
-        error: error?.message || 'Failed to process AI request',
+        error: errorMessage,
       }),
       {
         status: 500,

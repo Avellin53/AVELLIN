@@ -74,7 +74,7 @@ export default async function ProfilePage() {
         <MenuItem href="/profile/orders" icon={Package} label="Orders" />
         <MenuItem href="/profile/inbox" icon={Inbox} label="Inbox" />
         <MenuItem href="/profile/saved" icon={Heart} label="Saved Items" />
-        <MenuItem href="/profile/following" icon={Store} label="Followed Vendors" />
+        <MenuItem href="/profile/followed-vendors" icon={Store} label="Followed Vendors" />
       </div>
 
       <div className="w-full h-2 bg-neutral-100"></div>
@@ -83,7 +83,7 @@ export default async function ProfilePage() {
       <div className="bg-white">
         <h2 className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-4 py-3 border-b border-neutral-100">My Settings</h2>
         <MenuItem href="/profile/address" icon={BookUser} label="Address Book" />
-        <MenuItem href="/profile/settings" icon={UserCog} label="Account Management" />
+        <MenuItem href="/profile/settings/account" icon={UserCog} label="Account Management" />
         <MenuItem href="/profile/close" icon={UserX} label="Close Account" />
       </div>
 

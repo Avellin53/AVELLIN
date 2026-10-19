@@ -19,11 +19,13 @@ import {
   Lock,
   ShieldCheck,
   Zap,
+  UserPlus,
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { submitReviewAction } from '@/app/actions/reviews';
+import { toggleFollowVendorAction } from '@/app/actions/follows';
 import VendorChatModal from '@/components/chat/VendorChatModal';
 import { toast } from 'sonner';
 
@@ -59,6 +61,7 @@ export default function ProductDetailClient({
   initialReviews = [],
   currentUser,
   sizePassport,
+  initialIsFollowing = false,
 }: {
   product: Product;
   vendor?: { id: string; name?: string; email?: string; phone?: string } | null;
@@ -72,12 +75,15 @@ export default function ProductDetailClient({
     height?: string;
     unit?: string;
   } | null;
+  initialIsFollowing?: boolean;
 }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('M');
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [isFollowing, setIsFollowing] = useState<boolean>(initialIsFollowing);
+  const [isFollowingLoading, setIsFollowingLoading] = useState<boolean>(false);
 
   // Cart store & Auth modal store
   const addToCart = useCartStore((state) => state.addToCart);
@@ -168,6 +174,52 @@ export default function ProductDetailClient({
       return;
     }
     setChatModalOpen(true);
+  };
+
+  // Follow Designer toggle handler
+  const handleToggleFollow = async () => {
+    const targetVendorId = vendor?.id || product.vendor_id;
+    if (!targetVendorId) {
+      toast.error('Designer details unavailable for following');
+      return;
+    }
+
+    if (!currentUser?.id) {
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: `Sign in to follow ${vendorDisplayName} and receive alerts on new drops.`,
+        itemTitle: product.title,
+      });
+      return;
+    }
+
+    const previousState = isFollowing;
+    setIsFollowing(!previousState);
+    setIsFollowingLoading(true);
+
+    try {
+      const result = await toggleFollowVendorAction({ vendorId: targetVendorId });
+      if (!result.success) {
+        setIsFollowing(previousState);
+        toast.error(result.error || 'Failed to update follow status');
+      } else {
+        setIsFollowing(!!result.isFollowing);
+        if (result.isFollowing) {
+          toast.success(`You are now following ${vendorDisplayName}!`, {
+            description: 'You will receive drops and new collection updates from this atelier.',
+          });
+        } else {
+          toast(`Unfollowed ${vendorDisplayName}`, {
+            description: 'You will no longer receive collection updates from this designer.',
+          });
+        }
+      }
+    } catch (err: any) {
+      setIsFollowing(previousState);
+      toast.error(err?.message || 'Failed to follow designer');
+    } finally {
+      setIsFollowingLoading(false);
+    }
   };
 
   // Average rating calculation
@@ -413,7 +465,7 @@ export default function ProductDetailClient({
         {/* VENDOR CONTACT SECTION (Interactive In-App Vendor Chat) */}
         {/* ========================================================= */}
         <div className="bg-white rounded-2xl p-5 border border-linen-border shadow-xs hover:shadow-md transition-all duration-300 space-y-3.5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-sm shadow-sm flex-shrink-0">
                 {vendorDisplayName.slice(0, 2).toUpperCase()}
@@ -429,6 +481,31 @@ export default function ProductDetailClient({
                 </p>
               </div>
             </div>
+
+            {/* Follow Designer Toggle Button */}
+            <button
+              onClick={handleToggleFollow}
+              disabled={isFollowingLoading}
+              className={`px-4 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-xs active:scale-95 flex-shrink-0 self-start sm:self-auto ${
+                isFollowing
+                  ? 'bg-neutral-100 text-neutral-800 border border-neutral-300 hover:bg-neutral-200 hover:text-red-600'
+                  : 'bg-terracotta hover:bg-terracotta-dark text-white border border-terracotta'
+              }`}
+            >
+              {isFollowingLoading ? (
+                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isFollowing ? (
+                <>
+                  <Check size={14} className="text-emerald-600 stroke-[3]" />
+                  <span>Following</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus size={14} />
+                  <span>Follow Designer</span>
+                </>
+              )}
+            </button>
           </div>
 
           <p className="text-xs text-neutral-600 leading-relaxed">
