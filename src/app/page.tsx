@@ -22,18 +22,52 @@ export default async function HomePage() {
     }
   );
 
-  let products: any[] = [];
-  try {
-    const { data, error } = await supabase
+  // 1. Fetch entire products table with left join on profiles
+  const { data: products, error } = await supabase
+    .from('products')
+    .select('*, profiles(name, business_name, state, seller_score)')
+    .order('created_at', { ascending: false });
+
+  // 2. Strict server logs for Vercel Runtime Logs debugging
+  if (error) console.error("SUPABASE FETCH ERROR:", error.message);
+  console.log("PRODUCTS FETCHED:", products?.length || 0);
+
+  let finalProducts: any[] = products || [];
+
+  // 3. Fallback: If relationship error occurs, query products directly so 0 items never renders
+  if (error || finalProducts.length === 0) {
+    const { data: rawProducts, error: rawError } = await supabase
       .from('products')
-      .select('*, profiles:vendor_id(id, name, state)')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      products = data;
+    if (rawError) {
+      console.error("SUPABASE RAW PRODUCTS FETCH ERROR:", rawError.message);
+    } else if (rawProducts && rawProducts.length > 0) {
+      console.log("RECOVERED PRODUCTS VIA RAW QUERY:", rawProducts.length);
+      finalProducts = rawProducts;
+
+      // Enrich vendor profile info if available
+      try {
+        const vendorIds = Array.from(new Set(rawProducts.map((p: any) => p.vendor_id).filter(Boolean)));
+        if (vendorIds.length > 0) {
+          const { data: pList } = await supabase
+            .from('profiles')
+            .select('id, name, business_name, state, seller_score')
+            .in('id', vendorIds);
+
+          if (pList && pList.length > 0) {
+            const pMap = new Map(pList.map((p: any) => [p.id, p]));
+            finalProducts = rawProducts.map((prod: any) => ({
+              ...prod,
+              profiles: pMap.get(prod.vendor_id) || null,
+            }));
+          }
+        }
+      } catch (enrichErr) {
+        console.warn("Could not enrich vendor profiles:", enrichErr);
+      }
     }
-  } catch (err) {
-    console.error('Failed to query products from Supabase:', err);
   }
 
   return (
@@ -44,7 +78,7 @@ export default async function HomePage() {
       {/* 2. Direct E-Commerce Storefront Feed (Immediate Viewport) */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-20">
         <ProductFeed
-          products={products}
+          products={finalProducts}
           title="Explore Regional Luxury Brands"
           subtitle="Direct atelier ordering with biometric custom-fit tailoring & same-day regional dispatch"
           showCategoryFilter={true}

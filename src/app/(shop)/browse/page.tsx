@@ -25,10 +25,20 @@ async function BrowseProductGrid() {
     }
   );
 
-  const { data: products } = await supabase
+  let { data: products, error } = await supabase
     .from('products')
     .select(`*, vendor:vendors(name, isVerified)`)
     .order('created_at', { ascending: false });
+
+  if (error || !products || products.length === 0) {
+    const { data: rawProducts } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (rawProducts && rawProducts.length > 0) {
+      products = rawProducts;
+    }
+  }
 
   if (!products || products.length === 0) {
     return (
