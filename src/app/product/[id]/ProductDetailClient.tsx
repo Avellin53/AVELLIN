@@ -98,11 +98,27 @@ export default function ProductDetailClient({
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('M');
+  const [quantity, setQuantity] = useState<number>(1);
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState<boolean>(initialIsFollowing);
   const [isFollowingLoading, setIsFollowingLoading] = useState<boolean>(false);
   const [followersCount, setFollowersCount] = useState<number>(followerCount || 0);
+
+  const maxStock =
+    typeof product.stock_quantity === 'number'
+      ? product.stock_quantity
+      : typeof product.stock === 'number'
+      ? product.stock
+      : null;
+
+  const handleIncrease = () => {
+    setQuantity((q) => (maxStock !== null ? Math.min(maxStock, q + 1) : q + 1));
+  };
+
+  const handleDecrease = () => {
+    setQuantity((q) => Math.max(1, q - 1));
+  };
 
   useEffect(() => {
     if (followerCount !== undefined) {
@@ -156,9 +172,9 @@ export default function ProductDetailClient({
         });
         return;
       }
-      addToCart(product);
+      addToCart(product, quantity);
       toast.success('Added to cart', {
-        description: `${product.title} has been added to your shopping cart.`,
+        description: `${quantity}x ${product.title} has been added to your shopping cart.`,
       });
     } catch {
       openAuthModal({
@@ -185,7 +201,7 @@ export default function ProductDetailClient({
         });
         return;
       }
-      addToCart(product);
+      addToCart(product, quantity);
       router.push('/cart');
     } catch {
       openAuthModal({
@@ -374,7 +390,9 @@ export default function ProductDetailClient({
     }
   };
 
-  const formattedPrice = `₦${(product.price || 0).toLocaleString()}`;
+  const formatNaira = (amount: number) => `₦${(amount || 0).toLocaleString()}`;
+  const formattedPrice = formatNaira(product.price || 0);
+  const formattedTotalPrice = formatNaira((product.price || 0) * quantity);
   const fakeOldPrice = Math.round((product.price || 0) * 1.15);
   const vendorDisplayName = vendor?.business_name || vendor?.name || 'AVELLIN Premier Brand';
   const vendorId = vendor?.id || product.vendor_id;
@@ -532,6 +550,39 @@ export default function ProductDetailClient({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Quantity Selection */}
+        <div className="flex items-center gap-4 mb-2">
+          <span className="text-sm font-bold text-neutral-700">QUANTITY</span>
+          <div className="flex items-center border border-neutral-200 rounded-lg bg-white overflow-hidden shadow-2xs">
+            <button
+              type="button"
+              onClick={handleDecrease}
+              disabled={quantity <= 1}
+              className="px-4 py-2 text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 font-bold transition cursor-pointer"
+              aria-label="Decrease quantity"
+            >
+              -
+            </button>
+            <span className="px-4 py-2 font-bold text-neutral-900 border-x border-neutral-200 text-sm min-w-[36px] text-center">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={handleIncrease}
+              disabled={maxStock !== null && quantity >= maxStock}
+              className="px-4 py-2 text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 font-bold transition cursor-pointer"
+              aria-label="Increase quantity"
+            >
+              +
+            </button>
+          </div>
+          {maxStock !== null && (
+            <span className="text-xs text-neutral-500 font-medium">
+              ({maxStock} in stock)
+            </span>
+          )}
         </div>
 
         {/* Description */}
@@ -807,11 +858,46 @@ export default function ProductDetailClient({
 
       {/* 3. Sticky Bottom Action Bar with Trust Signals & Micro-interactions */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-linen-border py-3 px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
-        <div className="max-w-4xl mx-auto flex flex-col gap-2">
+        <div className="max-w-4xl mx-auto flex flex-col gap-2.5">
+          {/* Quantity Toggler */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-bold text-neutral-700">QUANTITY</span>
+              <div className="flex items-center border border-neutral-200 rounded-lg bg-white overflow-hidden shadow-2xs">
+                <button
+                  type="button"
+                  onClick={handleDecrease}
+                  disabled={quantity <= 1}
+                  className="px-3.5 py-1 text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 font-bold transition cursor-pointer"
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <span className="px-3.5 py-1 font-bold text-neutral-900 border-x border-neutral-200 text-xs min-w-[28px] text-center">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleIncrease}
+                  disabled={maxStock !== null && quantity >= maxStock}
+                  className="px-3.5 py-1 text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 font-bold transition cursor-pointer"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+            {maxStock !== null && (
+              <span className="text-xs text-neutral-500 font-medium">
+                {maxStock} available
+              </span>
+            )}
+          </div>
+
           <div className="flex items-center gap-3">
             <div className="flex flex-col min-w-[85px]">
               <span className="text-[10px] uppercase font-bold text-warmgrey">Total Price</span>
-              <span className="text-lg font-black text-charcoal">{formattedPrice}</span>
+              <span className="text-lg font-black text-charcoal">{formattedTotalPrice}</span>
             </div>
 
             {/* Add to Cart Primary Button */}
@@ -820,7 +906,7 @@ export default function ProductDetailClient({
               className="flex-1 h-13 bg-terracotta hover:bg-terracotta-dark text-white rounded-2xl flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
             >
               <ShoppingBag size={18} />
-              <span>Add to Cart</span>
+              <span>Add to Cart {quantity > 1 ? `(${quantity})` : ''}</span>
             </button>
 
             {/* Instant Buy Now Button */}

@@ -20,7 +20,7 @@ export interface CartItem {
 interface CartState {
   cartItems: CartItem[];
   items: CartItem[]; // alias for compatibility
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -32,8 +32,9 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       cartItems: [],
       items: [],
-      addToCart: (product: Product) => {
+      addToCart: (product: Product, quantity: number = 1) => {
         if (!product || !product.id) return;
+        const addQty = Math.max(1, quantity);
         set((state) => {
           const currentItems = Array.isArray(state?.cartItems) ? state.cartItems : [];
           const existingIndex = currentItems.findIndex(
@@ -44,11 +45,11 @@ export const useCartStore = create<CartState>()(
           if (existingIndex > -1) {
             updatedItems = currentItems.map((item, index) =>
               index === existingIndex
-                ? { ...item, quantity: (item.quantity || 1) + 1 }
+                ? { ...item, quantity: (item.quantity || 1) + addQty }
                 : item
             );
           } else {
-            updatedItems = [...currentItems, { product, quantity: 1 }];
+            updatedItems = [...currentItems, { product, quantity: addQty }];
           }
 
           return {
