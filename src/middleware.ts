@@ -328,6 +328,12 @@ export async function middleware(request: NextRequest) {
     supabaseResponse.headers.set('Access-Control-Allow-Credentials', 'true')
   }
 
+  // Explicitly bypass all API routes (/api/chat, etc.) from Supabase authentication redirects.
+  // AI stream routes must never trigger a redirect to /login (which returns HTML instead of a stream).
+  if (pathname.startsWith('/api/')) {
+    return supabaseResponse
+  }
+
   if (!supabaseUrl || !supabaseKey) {
     console.warn('Supabase Environment Variables are missing. Middleware bypassed.')
     return supabaseResponse
@@ -363,10 +369,11 @@ export async function middleware(request: NextRequest) {
   // Protected Routes Logic: ONLY protect routes like /profile, /admin, /cart/checkout, and /vendor
   // Unauthenticated users must be able to view the homepage, search, and view individual product pages freely.
   const isProtectedRoute =
-    pathname.startsWith('/profile') ||
+    !pathname.startsWith('/api') &&
+    (pathname.startsWith('/profile') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/cart/checkout') ||
-    pathname.startsWith('/vendor')
+    pathname.startsWith('/vendor'))
   
   if (isProtectedRoute && !session) {
     const url = request.nextUrl.clone()

@@ -52,6 +52,7 @@ export default function AIFitPage() {
     status,
     setMessages,
   } = useChat({
+    api: '/api/chat',
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: '/api/chat',
@@ -59,13 +60,13 @@ export default function AIFitPage() {
         cartItems: sanitizedCart,
       },
     }),
-    onError: (error: any) => {
-      console.error('AI STREAM ERROR: ', error);
+    onError: (err: any) => {
+      console.error('Chat Error:', err);
       toast.error('AI Style Plug connection issue', {
-        description: error?.message || 'Ms. Ave was unable to respond. Please check your connection or retry.',
+        description: err?.message || 'Ms. Ave was unable to respond. Please check your connection or retry.',
       });
     },
-  });
+  } as any);
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
