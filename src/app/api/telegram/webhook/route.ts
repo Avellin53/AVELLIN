@@ -284,11 +284,11 @@ _Example: Red Ankara Gown | 25000 | Native | Premium quality, 3 days delivery_
           await sendMessage(chatId, tutorialMessage);
 
           // Storefront profile prompt follow-up
-          const storefrontPrompt = `To officially open your AVELLIN storefront, please send your business details using exactly this format:
+          const storefrontPrompt = `*To officially open your AVELLIN storefront, please send your business details using exactly this format:*
 
-*Profile | Business Name | Shop Address | City | State*
+*Name | Business Name | Shop Address | City | State*
 
-_Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
+_Example: Name | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
 
           await sendMessage(chatId, storefrontPrompt);
         } else {
@@ -296,7 +296,7 @@ _Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
         }
         
         return NextResponse.json({ success: true });
-      } else if (text.toLowerCase().trim().startsWith('profile |')) {
+      } else if (text.toLowerCase().startsWith('name |') || text.toLowerCase().trim().startsWith('name |') || text.toLowerCase().trim().startsWith('profile |')) {
         const supabaseAdmin = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -315,7 +315,7 @@ _Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
           return NextResponse.json({ success: true });
         }
 
-        // 2. Parse: "Profile | Business Name | Shop Address | City | State"
+        // 2. Parse: "Name | Business Name | Shop Address | City | State"
         const parts = text.split('|').map((p: string) => p.trim());
         const businessName = parts[1] || '';
         const businessAddress = parts[2] || '';
@@ -325,7 +325,7 @@ _Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
         if (!businessName) {
           await sendMessage(
             chatId,
-            "⚠️ Business name is required. Please use the format:\n*Profile | Business Name | Shop Address | City | State*"
+            "⚠️ Business name is required. Please use the format:\n*Name | Business Name | Shop Address | City | State*"
           );
           return NextResponse.json({ success: true });
         }
