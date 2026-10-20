@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, BadgeCheck, Lock } from 'lucide-react';
+import { ShoppingCart, BadgeCheck, Heart } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
@@ -17,6 +18,8 @@ export default function ProductCard({
   priority?: boolean;
 }) {
   const addToCart = useCartStore((state) => state.addToCart);
+  const isSaved = useWishlistStore((state) => state.isSaved(product.id));
+  const toggleSave = useWishlistStore((state) => state.toggleSave);
   const openAuthModal = useAuthModalStore((state) => state.openAuthModal);
   const [mounted, setMounted] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -25,6 +28,7 @@ export default function ProductCard({
     setMounted(true);
   }, []);
 
+  // Protected Add to Cart for guest browsing
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating to product detail
     e.stopPropagation();
@@ -48,10 +52,49 @@ export default function ProductCard({
       toast.success('Added to cart', {
         description: `${product.title} has been added to your shopping cart.`,
       });
-    } catch {
-      // Fallback
-      addToCart(product);
-      toast.success('Added to cart');
+    } catch (err: any) {
+      console.warn('Auth check error in handleAddToCart:', err);
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to add items to your cart.',
+        itemTitle: product?.title,
+      });
+    }
+  };
+
+  // Protected Wishlist Toggle for guest browsing
+  const handleToggleWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        openAuthModal({
+          redirectUrl: `/product/${product.id}`,
+          actionMessage: 'Sign in to curate and save luxury pieces to your bespoke wishlist.',
+          itemTitle: product.title,
+        });
+        return;
+      }
+
+      const newlySaved = toggleSave(product);
+      toast(newlySaved ? 'Saved to wishlist' : 'Removed from wishlist', {
+        description: newlySaved
+          ? `${product.title} added to your saved luxury items.`
+          : `${product.title} removed from saved items.`,
+      });
+    } catch (err: any) {
+      console.warn('Auth check error in handleToggleWishlist:', err);
+      openAuthModal({
+        redirectUrl: `/product/${product.id}`,
+        actionMessage: 'Sign in to save items to your wishlist.',
+        itemTitle: product?.title,
+      });
     }
   };
 
@@ -99,6 +142,21 @@ export default function ProductCard({
           <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-charcoal border border-white/40 shadow-xs z-10">
             {product.category}
           </div>
+        )}
+
+        {/* Floating Wishlist Button */}
+        {mounted && (
+          <button
+            onClick={handleToggleWishlist}
+            className={`absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition-all duration-300 z-10 cursor-pointer shadow-sm hover:scale-110 active:scale-95 ${
+              isSaved
+                ? 'bg-terracotta text-white shadow-md'
+                : 'bg-white/90 text-neutral-600 hover:text-terracotta hover:bg-white'
+            }`}
+            aria-label="Save to Wishlist"
+          >
+            <Heart size={14} fill={isSaved ? 'currentColor' : 'none'} />
+          </button>
         )}
       </div>
 

@@ -28,6 +28,7 @@ import { submitReviewAction } from '@/app/actions/reviews';
 import { toggleFollowVendorAction } from '@/app/actions/follows';
 import VendorChatModal from '@/components/chat/VendorChatModal';
 import ReviewForm from '@/components/ReviewForm';
+import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
 
 interface Product {
@@ -118,64 +119,116 @@ export default function ProductDetailClient({
   const sizes = ['S', 'M', 'L', 'XL'];
 
   // Add to Cart handler with guest auth modal trigger
-  const handleAddToCart = () => {
-    if (!currentUser?.id) {
+  const handleAddToCart = async () => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        openAuthModal({
+          redirectUrl: `/product/${product.id}`,
+          actionMessage: 'Sign in to add this handcrafted luxury piece to your shopping cart.',
+          itemTitle: product.title,
+        });
+        return;
+      }
+      addToCart(product);
+      toast.success('Added to cart', {
+        description: `${product.title} has been added to your shopping cart.`,
+      });
+    } catch {
       openAuthModal({
         redirectUrl: `/product/${product.id}`,
         actionMessage: 'Sign in to add this handcrafted luxury piece to your shopping cart.',
         itemTitle: product.title,
       });
-      return;
     }
-    addToCart(product);
-    toast.success('Added to cart', {
-      description: `${product.title} has been added to your shopping cart.`,
-    });
   };
 
   // Buy Now handler with guest auth modal trigger
-  const handleBuyNow = () => {
-    if (!currentUser?.id) {
+  const handleBuyNow = async () => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        openAuthModal({
+          redirectUrl: `/product/${product.id}`,
+          actionMessage: 'Sign in to proceed directly to secure encrypted checkout.',
+          itemTitle: product.title,
+        });
+        return;
+      }
+      addToCart(product);
+      router.push('/cart');
+    } catch {
       openAuthModal({
         redirectUrl: `/product/${product.id}`,
         actionMessage: 'Sign in to proceed directly to secure encrypted checkout.',
         itemTitle: product.title,
       });
-      return;
     }
-    addToCart(product);
-    router.push('/cart');
   };
 
   // Wishlist handler with guest auth modal trigger
-  const handleToggleWishlist = () => {
-    if (!currentUser?.id) {
+  const handleToggleWishlist = async () => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        openAuthModal({
+          redirectUrl: `/product/${product.id}`,
+          actionMessage: 'Sign in to curate and save luxury pieces to your bespoke wishlist.',
+          itemTitle: product.title,
+        });
+        return;
+      }
+      const newlySaved = toggleSave(product);
+      toast(newlySaved ? 'Saved to wishlist' : 'Removed from wishlist', {
+        description: newlySaved
+          ? `${product.title} added to your saved luxury items.`
+          : `${product.title} removed from saved items.`,
+      });
+    } catch {
       openAuthModal({
         redirectUrl: `/product/${product.id}`,
-        actionMessage: 'Sign in to curate and save luxury pieces to your bespoke wishlist.',
+        actionMessage: 'Sign in to save items to your bespoke wishlist.',
         itemTitle: product.title,
       });
-      return;
     }
-    const newlySaved = toggleSave(product);
-    toast(newlySaved ? 'Saved to wishlist' : 'Removed from wishlist', {
-      description: newlySaved
-        ? `${product.title} added to your saved luxury items.`
-        : `${product.title} removed from saved items.`,
-    });
   };
 
   // Open In-App Vendor Chat
-  const handleOpenVendorChat = () => {
-    if (!currentUser?.id) {
+  const handleOpenVendorChat = async () => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        openAuthModal({
+          redirectUrl: `/product/${product.id}`,
+          actionMessage: `Sign in to initiate an interactive in-app chat with ${vendorDisplayName}.`,
+          itemTitle: product.title,
+        });
+        return;
+      }
+      setChatModalOpen(true);
+    } catch {
       openAuthModal({
         redirectUrl: `/product/${product.id}`,
-        actionMessage: `Sign in to initiate an interactive in-app chat with ${vendor?.name || 'the vendor'}.`,
+        actionMessage: `Sign in to chat with ${vendorDisplayName}.`,
         itemTitle: product.title,
       });
-      return;
     }
-    setChatModalOpen(true);
   };
 
   // Follow Designer toggle handler
@@ -186,10 +239,24 @@ export default function ProductDetailClient({
       return;
     }
 
-    if (!currentUser?.id) {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        openAuthModal({
+          redirectUrl: `/product/${product.id}`,
+          actionMessage: `Sign in to follow ${vendorDisplayName} and receive alerts on new drops.`,
+          itemTitle: product.title,
+        });
+        return;
+      }
+    } catch {
       openAuthModal({
         redirectUrl: `/product/${product.id}`,
-        actionMessage: `Sign in to follow ${vendorDisplayName} and receive alerts on new drops.`,
+        actionMessage: `Sign in to follow ${vendorDisplayName}.`,
         itemTitle: product.title,
       });
       return;
