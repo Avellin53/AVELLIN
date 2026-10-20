@@ -23,10 +23,10 @@ export async function POST(req: Request) {
 
     const { messages, cartItems } = body || {};
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = process.env.google_gemini_key || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
     if (!apiKey) {
-      const missingKeyError = 'GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not configured in environment variables.';
+      const missingKeyError = 'google_gemini_key (or GEMINI_API_KEY) is not configured in environment variables.';
       console.error('[/api/chat] Error:', missingKeyError);
       return new Response(
         JSON.stringify({
@@ -40,10 +40,10 @@ export async function POST(req: Request) {
     }
 
     // Google provider wrapper that explicitly passes the API key
-    // Allows: google('gemini-2.5-pro', { apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY })
+    // Matches: google('gemini-2.5-pro', { apiKey: process.env.google_gemini_key })
     const google = (modelId: string, options?: { apiKey?: string }) => {
       const provider = createGoogleGenerativeAI({
-        apiKey: options?.apiKey || apiKey,
+        apiKey: options?.apiKey || process.env.google_gemini_key || apiKey,
       });
       return provider(modelId);
     };
@@ -65,28 +65,44 @@ Rules: Keep responses conversational and naturally formatted. Never sound like a
       ? await convertToModelMessages(messages)
       : messages;
 
-    // Explicitly pass apiKey to the Google provider model
-    // e.g. google('gemini-2.5-pro', { apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY })
-    const candidateModels = ['gemini-2.5-pro', 'gemini-1.5-flash-latest', 'gemini-flash-latest'];
     let streamResult: any = null;
     let lastError: any = null;
 
-    for (const modelName of candidateModels) {
-      try {
-        const result = await streamText({
-          model: google(modelName, { apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY }),
-          system: systemPrompt,
-          messages: modelMessages,
-          onError({ error }) {
-            console.error(`[/api/chat] Model ${modelName} stream error:`, (error as any)?.message, (error as any)?.stack);
-          },
-        });
-        streamResult = result;
-        break;
-      } catch (streamError: any) {
-        console.warn(`[/api/chat] Stream init failed with model ${modelName}:`, streamError?.message);
-        console.error(`[/api/chat] Model ${modelName} init error stack:`, streamError?.stack);
-        lastError = streamError;
+    // Primary model execution with explicit custom key:
+    try {
+      const result = await streamText({
+        model: google('gemini-2.5-pro', { 
+          apiKey: process.env.google_gemini_key || apiKey,
+        }),
+        system: systemPrompt,
+        messages: modelMessages,
+        onError({ error }) {
+          console.error('[/api/chat] Model gemini-2.5-pro stream error:', (error as any)?.message, (error as any)?.stack);
+        },
+      });
+      streamResult = result;
+    } catch (primaryErr: any) {
+      console.warn('[/api/chat] gemini-2.5-pro initialization failed, attempting fallback models:', primaryErr?.message);
+      lastError = primaryErr;
+
+      const fallbackModels = ['gemini-1.5-flash-latest', 'gemini-flash-latest'];
+      for (const modelName of fallbackModels) {
+        try {
+          const fallbackResult = await streamText({
+            model: google(modelName, { 
+              apiKey: process.env.google_gemini_key || apiKey,
+            }),
+            system: systemPrompt,
+            messages: modelMessages,
+            onError({ error }) {
+              console.error(`[/api/chat] Fallback model ${modelName} stream error:`, (error as any)?.message, (error as any)?.stack);
+            },
+          });
+          streamResult = fallbackResult;
+          break;
+        } catch (fbErr: any) {
+          lastError = fbErr;
+        }
       }
     }
 

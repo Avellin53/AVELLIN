@@ -16,18 +16,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = process.env.google_gemini_key || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
-      console.error('[/api/color-analysis] Error: Neither GEMINI_API_KEY nor GOOGLE_GENERATIVE_AI_API_KEY is configured in environment variables.');
+      console.error('[/api/color-analysis] Error: google_gemini_key is not configured in environment variables.');
       return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY is missing in environment variables.' }),
+        JSON.stringify({ error: 'google_gemini_key is missing in environment variables.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const google = createGoogleGenerativeAI({
-      apiKey,
-    });
+    const google = (modelId: string, options?: { apiKey?: string }) => {
+      const provider = createGoogleGenerativeAI({
+        apiKey: options?.apiKey || process.env.google_gemini_key || apiKey,
+      });
+      return provider(modelId);
+    };
 
     // Clean base64 string
     let mimeType = 'image/jpeg';
@@ -44,7 +47,9 @@ export async function POST(req: Request) {
 
     // Prompt Gemini 2.5 Pro
     const { text } = await generateText({
-      model: google('gemini-2.5-pro'),
+      model: google('gemini-2.5-pro', { 
+        apiKey: process.env.google_gemini_key || apiKey 
+      }),
       messages: [
         {
           role: 'user',

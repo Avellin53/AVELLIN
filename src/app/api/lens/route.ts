@@ -25,18 +25,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = process.env.google_gemini_key || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
-      console.error('[/api/lens] Error: GEMINI_API_KEY is not configured in environment variables.');
+      console.error('[/api/lens] Error: google_gemini_key is not configured in environment variables.');
       return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY is missing in environment variables.' }),
+        JSON.stringify({ error: 'google_gemini_key is missing in environment variables.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const google = createGoogleGenerativeAI({
-      apiKey,
-    });
+    const google = (modelId: string, options?: { apiKey?: string }) => {
+      const provider = createGoogleGenerativeAI({
+        apiKey: options?.apiKey || process.env.google_gemini_key || apiKey,
+      });
+      return provider(modelId);
+    };
 
     // Standardize base64 data: strip data URL prefix if present for clean extraction
     let mimeType = 'image/jpeg';
@@ -64,7 +67,9 @@ export async function POST(req: Request) {
     for (const modelName of candidateModels) {
       try {
         const { text } = await generateText({
-          model: google(modelName),
+          model: google(modelName, { 
+            apiKey: process.env.google_gemini_key || apiKey 
+          }),
           messages: [
             {
               role: 'user',
