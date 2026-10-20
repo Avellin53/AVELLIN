@@ -45,9 +45,9 @@ export async function POST(req: Request) {
       base64Clean = parts[1];
     }
 
-    // Prompt Gemini 2.5 Pro
+    // Prompt Gemini 1.5 Pro
     const { text } = await generateText({
-      model: google('gemini-2.5-pro', { 
+      model: google('gemini-1.5-pro', { 
         apiKey: process.env.google_gemini_key || apiKey 
       }),
       messages: [

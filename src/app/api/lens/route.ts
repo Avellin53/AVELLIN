@@ -59,8 +59,8 @@ export async function POST(req: Request) {
       }
     }
 
-    // Call Gemini with candidate models (gemini-2.5-pro, gemini-1.5-flash-latest, with gemini-flash-latest fallback)
-    const candidateModels = ['gemini-2.5-pro', 'gemini-1.5-flash-latest', 'gemini-flash-latest'];
+    // Call Gemini with candidate models (gemini-1.5-pro, gemini-1.5-flash-latest, with gemini-flash-latest fallback)
+    const candidateModels = ['gemini-1.5-pro', 'gemini-1.5-flash-latest', 'gemini-flash-latest'];
     let textResult = '';
     let lastError: any = null;
 

@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     });
 
     const result = await streamText({
-      model: google('gemini-2.5-pro'),
+      model: google('gemini-1.5-pro'),
       system: 'You are Ms. Ave, a highly knowledgeable and witty personal fashion concierge for AVELLIN, a Nigerian luxury e-commerce platform. Keep your responses concise, helpful, and culturally relevant to Nigerian fashion (Owambe, Native wears, etc.).',
       messages,
     });

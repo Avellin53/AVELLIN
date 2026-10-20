@@ -14,7 +14,12 @@ export default function AIFitPage() {
   const router = useRouter();
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
   const cartItems = useCartStore((state) => state.cartItems || []);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Load from localStorage or start fresh (no legacy hardcoded messages)
   const [initialMessages] = useState<UIMessage[]>(() => {
@@ -123,6 +128,10 @@ export default function AIFitPage() {
     'Help me style native textiles with modern streetwear.',
     'Recommend top accessories for an all-white dinner look.',
   ];
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-linen pb-32">
