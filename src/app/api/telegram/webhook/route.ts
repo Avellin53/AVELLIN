@@ -276,9 +276,9 @@ As a premium vendor, your presentation is everything. Shoppers on AVELLIN pay fo
 💰 *3. How to Upload Right Now*
 Simply upload a photo in this chat, and type your details in the *image caption* using exactly this format (separated by the | symbol):
 
-*Title | Price | Category | Description*
+*Title | Price | Category | Sizes | Quantity | Description*
 
-_Example: Red Ankara Gown | 25000 | Native | Premium quality, 3 days delivery_
+_Example: Chunky Derby Shoe | 25000 | Shoes | 40, 41, 42, 43 | 5 | Heavy-duty lug sole_
 `;
 
           await sendMessage(chatId, tutorialMessage);
@@ -351,13 +351,31 @@ _Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
           return NextResponse.json({ success: true });
         }
 
-        // 2. Parse the product string: "Title | Price | Category | Description"
+        // 2. Parse the product string: "Title | Price | Category | Sizes | Quantity | Description"
         const parts = text.split('|').map((p: string) => p.trim());
-        const title = parts[0] || 'Untitled Product';
-        const rawPrice = parts[1] || '0';
-        const price = parseInt(rawPrice.replace(/[^0-9]/g, ''), 10);
+        const title = parts[0] || 'Untitled';
+        const price = parseInt((parts[1] || '0').replace(/[^0-9]/g, ''), 10) || 0;
         const category = parts[2] || 'Uncategorized';
-        const description = parts[3] || '';
+
+        let sizesInput = 'Standard';
+        let stock_quantity = 1;
+        let description = '';
+
+        if (parts.length >= 6) {
+          sizesInput = parts[3] || 'Standard'; // e.g., "40, 41, 42" or "S, M, L"
+          stock_quantity = parseInt((parts[4] || '1').replace(/[^0-9]/g, ''), 10) || 1;
+          description = parts.slice(5).join(' | ');
+        } else if (parts.length === 5) {
+          sizesInput = parts[3] || 'Standard';
+          description = parts[4] || '';
+        } else if (parts.length === 4) {
+          // Backward compatibility for legacy 4-part uploads
+          description = parts[3] || '';
+        } else {
+          sizesInput = parts[3] || 'Standard';
+          stock_quantity = parseInt((parts[4] || '1').replace(/[^0-9]/g, ''), 10) || 1;
+          description = parts[5] || '';
+        }
 
         // 3. Handle Image
         let imageUrl = "/images/placeholder.png"; 
@@ -398,8 +416,24 @@ _Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
         }
 
         // 4. Insert into Products Table
-        const { error: insertError } = await supabaseAdmin.from('products').insert([
-          {
+        const insertPayload: Record<string, any> = {
+          title,
+          price,
+          category,
+          sizes: sizesInput,
+          stock_quantity,
+          description,
+          image_url: imageUrl,
+          vendor_id: vendorProfile.id,
+          created_at: new Date().toISOString()
+        };
+
+        let { error: insertError } = await supabaseAdmin.from('products').insert([insertPayload]);
+
+        // Graceful fallback if 'sizes' or 'stock_quantity' columns do not exist in the database table yet
+        if (insertError && (insertError.message?.includes('sizes') || insertError.message?.includes('stock_quantity') || insertError.code === 'PGRST204')) {
+          console.warn("Retrying insert without new dynamic columns:", insertError.message);
+          const fallbackPayload = {
             title,
             price,
             category,
@@ -407,8 +441,10 @@ _Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
             image_url: imageUrl,
             vendor_id: vendorProfile.id,
             created_at: new Date().toISOString()
-          }
-        ]);
+          };
+          const retryRes = await supabaseAdmin.from('products').insert([fallbackPayload]);
+          insertError = retryRes.error;
+        }
 
         if (insertError) {
           console.error("DB Insert Error:", insertError);

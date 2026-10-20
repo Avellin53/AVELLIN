@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -39,6 +39,8 @@ interface Product {
   category?: string;
   description?: string;
   vendor_id?: string;
+  sizes?: string;
+  stock_quantity?: number;
   stock?: any;
   specs?: any;
   [key: string]: any;
@@ -97,7 +99,29 @@ export default function ProductDetailClient({
 }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<string>('M');
+  const availableSizes = useMemo(() => {
+    if (!product?.sizes) return ['Standard'];
+    const parsed = product.sizes
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    return parsed.length > 0 ? parsed : ['Standard'];
+  }, [product?.sizes]);
+
+  const [selectedSize, setSelectedSize] = useState<string>(() => {
+    if (product?.sizes) {
+      const parts = product.sizes.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (parts.length > 0) return parts[0];
+    }
+    return 'Standard';
+  });
+
+  useEffect(() => {
+    if (availableSizes.length > 0 && !availableSizes.includes(selectedSize)) {
+      setSelectedSize(availableSizes[0]);
+    }
+  }, [availableSizes, selectedSize]);
+
   const [quantity, setQuantity] = useState<number>(1);
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [chatModalOpen, setChatModalOpen] = useState(false);
@@ -154,8 +178,6 @@ export default function ProductDetailClient({
     }
   }, [initialReviews]);
 
-  const sizes = ['S', 'M', 'L', 'XL'];
-
   // Add to Cart handler with guest auth modal trigger
   const handleAddToCart = async () => {
     try {
@@ -172,9 +194,9 @@ export default function ProductDetailClient({
         });
         return;
       }
-      addToCart(product, quantity);
+      addToCart({ ...product, selectedSize, selected_size: selectedSize }, quantity);
       toast.success('Added to cart', {
-        description: `${quantity}x ${product.title} has been added to your shopping cart.`,
+        description: `${quantity}x ${product.title} (${selectedSize}) has been added to your shopping cart.`,
       });
     } catch {
       openAuthModal({
@@ -201,7 +223,7 @@ export default function ProductDetailClient({
         });
         return;
       }
-      addToCart(product, quantity);
+      addToCart({ ...product, selectedSize, selected_size: selectedSize }, quantity);
       router.push('/cart');
     } catch {
       openAuthModal({
@@ -535,12 +557,12 @@ export default function ProductDetailClient({
               Fit Calibrated
             </span>
           </div>
-          <div className="flex gap-2">
-            {sizes.map((s) => (
+          <div className="flex flex-wrap gap-2">
+            {availableSizes.map((s) => (
               <button
                 key={s}
                 onClick={() => setSelectedSize(s)}
-                className={`flex-1 h-11 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center border hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
+                className={`flex-1 min-w-[3rem] h-11 rounded-xl text-xs font-bold transition-all duration-300 flex items-center justify-center border hover:-translate-y-0.5 active:scale-95 cursor-pointer px-3 ${
                   selectedSize === s
                     ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
                     : 'bg-white text-charcoal border-linen-border hover:bg-neutral-50 shadow-xs'
