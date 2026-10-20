@@ -265,7 +265,7 @@ export default function ProductFeed({
             <Sparkles size={24} className="text-warmgrey opacity-60" />
           </div>
           <h3 className="font-bold text-neutral-900 text-sm mb-1">
-            No products found in this category yet.
+            No products found in this category yet. Check back soon...
           </h3>
           <p className="text-xs text-neutral-500 max-w-xs mb-5 leading-relaxed">
             {selectedState !== 'All States'
