@@ -69,7 +69,7 @@ export default function VendorChatModal({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const openAuthModal = useAuthModalStore((state) => state.openAuthModal);
 
-  const vendorName = vendor?.name || 'Verified Atelier';
+  const vendorName = vendor?.name || 'Verified Brand';
   const effectiveVendorId = vendor?.id || product.vendor_id || '00000000-0000-0000-0000-000000000001';
 
   // Sizing snippet

@@ -56,18 +56,12 @@ export default function ProductFeed({
 
   // Derive vendor state from profiles (vendor_id -> profiles.id) or fallback
   const enrichedProducts = useMemo(() => {
-    return products.map((product, idx) => {
-      // Determine state from profile join, vendor object, or deterministic seed for test catalog
-      let state =
+    return products.map((product) => {
+      const state =
         product.profiles?.state ||
         product.vendor?.state ||
-        product.vendor_state;
-
-      if (!state) {
-        // Fallback assignment among target logistics hubs if not populated in DB
-        const mockStates = ['Lagos', 'Abuja', 'Port Harcourt', 'Lagos', 'Edo', 'Oyo'];
-        state = mockStates[idx % mockStates.length];
-      }
+        product.vendor_state ||
+        'Lagos';
 
       return {
         ...product,
@@ -103,9 +97,9 @@ export default function ProductFeed({
       case 'Port Harcourt':
         return '🚚 Fast Regional Courier within Rivers & Niger Delta';
       case 'Edo':
-        return '🚚 Express Benin City Atelier Delivery';
+        return '🚚 Express Benin City Brand Delivery';
       case 'Oyo':
-        return '🚚 Direct Ibadan Atelier Delivery within 24 Hours';
+        return '🚚 Direct Ibadan Brand Delivery within 24 Hours';
       default:
         return '📦 Express Courier across all 36 Nigerian States & FCT';
     }
@@ -188,19 +182,26 @@ export default function ProductFeed({
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center flex flex-col items-center justify-center bg-white rounded-2xl border border-linen-border p-6">
-          <MapPin size={32} className="text-neutral-300 mb-2" />
-          <h3 className="font-bold text-neutral-900 text-sm">
-            No Designers Found in {selectedState}
+        <div className="py-16 text-center flex flex-col items-center justify-center bg-white rounded-2xl border border-linen-border p-6 shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-linen-surface flex items-center justify-center mb-3 text-warmgrey border border-linen-border">
+            <Sparkles size={24} className="text-warmgrey opacity-60" />
+          </div>
+          <h3 className="font-bold text-neutral-900 text-sm mb-1">
+            No products found in this category yet.
           </h3>
-          <p className="text-xs text-neutral-500 mt-1 max-w-[240px]">
-            We haven't onboarded ateliers in this state yet. Switch back to Lagos or browse All States for nationwide express courier.
+          <p className="text-xs text-neutral-500 max-w-xs mb-5">
+            {selectedState !== 'All States'
+              ? `No items currently listed for ${selectedState}. Try resetting your filters to explore all available pieces.`
+              : 'Check back soon for new luxury drops or reset your filters.'}
           </p>
           <button
-            onClick={() => setSelectedState('All States')}
-            className="mt-4 px-4 py-2 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-black transition"
+            onClick={() => {
+              setSelectedState('All States');
+              setSelectedCategory('All');
+            }}
+            className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-black transition shadow-sm"
           >
-            Show All Verified States
+            Reset Active Filters
           </button>
         </div>
       )}

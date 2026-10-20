@@ -60,7 +60,7 @@ export default function ProductCard({
     product?.vendor?.name ||
     product?.vendor?.store_name ||
     product?.vendor_name ||
-    'Verified Atelier';
+    'Verified Brand';
 
   return (
     <Link

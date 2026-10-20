@@ -45,17 +45,16 @@ export default function HomeFeedClient({
   const NIGERIAN_STATES = ['All States', 'Lagos', 'Abuja', 'Port Harcourt', 'Edo', 'Oyo'];
   const [selectedState, setSelectedState] = useState('All States');
 
-  const filteredProducts = (initialProducts || []).filter((product: any, idx: number) => {
+  const filteredProducts = (initialProducts || []).filter((product: any) => {
     const matchesCategory =
       activeCategory === 'All' ||
       (product.category && product.category.toLowerCase() === activeCategory.toLowerCase());
 
-    const fallbackStates = ['Lagos', 'Abuja', 'Port Harcourt', 'Lagos', 'Edo', 'Oyo'];
     const productState =
       product.profiles?.state ||
       product.vendor?.state ||
       product.vendor_state ||
-      fallbackStates[idx % fallbackStates.length];
+      'Lagos';
 
     const matchesState =
       selectedState === 'All States' ||
@@ -213,26 +212,25 @@ export default function HomeFeedClient({
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center flex flex-col items-center px-4">
-          <Sparkles size={32} className="text-neutral-300 mb-3 opacity-50" />
-          <h3 className="font-bold text-neutral-900">
-            {activeCategory === 'All'
-              ? 'New collections dropping soon'
-              : `No products found in "${activeCategory}"`}
+        <div className="py-16 text-center flex flex-col items-center justify-center px-4">
+          <div className="w-14 h-14 rounded-full bg-linen-surface flex items-center justify-center mb-3 text-warmgrey border border-linen-border">
+            <Sparkles size={24} className="text-warmgrey opacity-60" />
+          </div>
+          <h3 className="font-bold text-neutral-900 text-sm mb-1">
+            No products found in this category yet.
           </h3>
-          <p className="text-xs text-neutral-500 mt-1 max-w-[220px]">
-            {activeCategory === 'All'
-              ? 'Check back later for exclusive drops from African designers.'
-              : 'Try selecting another category or view all products.'}
+          <p className="text-xs text-neutral-500 mt-1 max-w-[240px] mb-4">
+            Try resetting your active category or location filters to view all verified pieces.
           </p>
-          {activeCategory !== 'All' && (
-            <button
-              onClick={() => handleCategoryClick('All')}
-              className="mt-4 px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-bold shadow hover:bg-neutral-800 transition"
-            >
-              Show All Products
-            </button>
-          )}
+          <button
+            onClick={() => {
+              handleCategoryClick('All');
+              setSelectedState('All States');
+            }}
+            className="px-5 py-2.5 rounded-xl bg-neutral-900 text-white text-xs font-bold shadow hover:bg-neutral-800 transition"
+          >
+            Reset Active Filters
+          </button>
         </div>
       )}
     </div>

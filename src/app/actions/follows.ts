@@ -209,7 +209,7 @@ export async function getFollowedVendorsAction(): Promise<{
       const vendorProducts = productsByVendor[f.vendor_id] || [];
       return {
         id: f.vendor_id,
-        name: profile.name || 'Verified Atelier',
+        name: profile.name || 'Verified Brand',
         email: profile.email || '',
         phone: profile.phone || '',
         followedAt: f.created_at,

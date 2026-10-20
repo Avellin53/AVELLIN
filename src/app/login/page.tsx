@@ -50,7 +50,7 @@ export default function LoginPage() {
           {/* Editorial Captions */}
           <div className="relative z-20 space-y-3">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-amber-200 text-[11px] font-black uppercase tracking-wider border border-white/20">
-              <span>Verified Atelier Drops</span>
+              <span>Verified Brand Drops</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-white font-serif">

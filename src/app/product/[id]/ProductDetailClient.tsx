@@ -208,7 +208,7 @@ export default function ProductDetailClient({
         setIsFollowing(!!result.isFollowing);
         if (result.isFollowing) {
           toast.success(`You are now following ${vendorDisplayName}!`, {
-            description: 'You will receive drops and new collection updates from this atelier.',
+            description: 'You will receive drops and new collection updates from this brand.',
           });
         } else {
           toast(`Unfollowed ${vendorDisplayName}`, {
@@ -285,7 +285,7 @@ export default function ProductDetailClient({
 
   const formattedPrice = `₦${(product.price || 0).toLocaleString()}`;
   const fakeOldPrice = Math.round((product.price || 0) * 1.15);
-  const vendorDisplayName = vendor?.name || 'AVELLIN Premier Atelier';
+  const vendorDisplayName = vendor?.name || 'AVELLIN Premier Brand';
 
   return (
     <div className="flex flex-col min-h-screen bg-linen relative pb-40">
@@ -448,7 +448,7 @@ export default function ProductDetailClient({
               <BadgeCheck size={18} />
             </div>
             <div>
-              <span className="font-bold text-charcoal block">100% Verified Atelier</span>
+              <span className="font-bold text-charcoal block">100% Verified Brand</span>
               <span className="text-[10px] text-neutral-400">Authenticated Quality</span>
             </div>
           </div>

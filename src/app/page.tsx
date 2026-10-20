@@ -27,71 +27,11 @@ export default async function LandingPage() {
       .order('created_at', { ascending: false })
       .limit(8);
 
-    if (!error && data && data.length > 0) {
+    if (!error && data) {
       products = data;
     }
   } catch (err) {
-    console.warn('Failed to query products on landing page:', err);
-  }
-
-  // Fallback curated showcase if DB query returned empty
-  if (products.length === 0) {
-    products = [
-      {
-        id: 'avl-p1',
-        title: 'Emerald Silk Agbada Set',
-        price: 95000,
-        image_url:
-          'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=600',
-        vendor_state: 'Lagos',
-        category: 'Native',
-      },
-      {
-        id: 'avl-p2',
-        title: 'Classic Obsidian Senator Kaftan',
-        price: 75000,
-        image_url:
-          'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600',
-        vendor_state: 'Abuja',
-        category: 'Native',
-      },
-      {
-        id: 'avl-p3',
-        title: 'Royal Indigo Dansiki Tunic',
-        price: 68000,
-        image_url:
-          'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=600',
-        vendor_state: 'Port Harcourt',
-        category: 'Native',
-      },
-      {
-        id: 'avl-p4',
-        title: 'Bespoke Ankara Wrap Midi Dress',
-        price: 52000,
-        image_url:
-          'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=600',
-        vendor_state: 'Edo',
-        category: 'Dresses',
-      },
-      {
-        id: 'avl-p5',
-        title: 'Tailored Linen Grandad Shirt',
-        price: 45000,
-        image_url:
-          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600',
-        vendor_state: 'Oyo',
-        category: 'Tops',
-      },
-      {
-        id: 'avl-p6',
-        title: 'Embroidered Velvet Fila Cap & Beads',
-        price: 28000,
-        image_url:
-          'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&q=80&w=600',
-        vendor_state: 'Lagos',
-        category: 'Accessories',
-      },
-    ];
+    console.error('Failed to query products on landing page:', err);
   }
 
   return (
@@ -145,7 +85,7 @@ export default async function LandingPage() {
         <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-linen-border p-5 sm:p-7 shadow-sm">
           <ProductFeed
             products={products}
-            title="Explore Regional Luxury Ateliers"
+            title="Explore Regional Luxury Brands"
             subtitle="Select your preferred state to filter designers offering local delivery & express logistics"
           />
         </div>
@@ -193,8 +133,8 @@ export default async function LandingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-neutral-200 p-6 flex items-center justify-between shadow-sm">
             <div>
-              <span className="text-sm font-bold text-neutral-900 block">100% Verified Ateliers</span>
-              <span className="text-xs text-neutral-500">Every atelier authenticated before listing</span>
+              <span className="text-sm font-bold text-neutral-900 block">100% Verified Brands</span>
+              <span className="text-xs text-neutral-500">Every brand authenticated before listing</span>
             </div>
             <span className="text-xs font-extrabold text-terracotta bg-terracotta/10 px-3 py-1.5 rounded-xl border border-terracotta/20 uppercase tracking-wider">
               Guaranteed

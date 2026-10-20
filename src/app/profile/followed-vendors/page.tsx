@@ -134,7 +134,7 @@ export default function FollowedVendorsPage() {
                           <BadgeCheck size={16} className="text-emerald-600 fill-emerald-100 flex-shrink-0" />
                         </div>
                         <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">
-                          Verified Atelier
+                          Verified Brand
                         </p>
                       </div>
                     </div>
