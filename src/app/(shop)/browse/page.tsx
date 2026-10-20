@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import React, { Suspense } from 'react';
 import { Sparkles, AlertCircle } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
