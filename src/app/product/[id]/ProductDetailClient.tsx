@@ -65,9 +65,23 @@ export default function ProductDetailClient({
   currentUser,
   sizePassport,
   initialIsFollowing = false,
+  followerCount = 0,
 }: {
   product: Product;
-  vendor?: { id: string; name?: string; email?: string; phone?: string } | null;
+  vendor?: {
+    id: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    business_name?: string;
+    business_address?: string;
+    city?: string;
+    state?: string;
+    seller_score?: number;
+    successful_sales?: number;
+    shipping_speed_rating?: string;
+    quality_score_rating?: string;
+  } | null;
   initialReviews?: Review[];
   currentUser?: { id: string; email?: string } | null;
   sizePassport?: {
@@ -79,6 +93,7 @@ export default function ProductDetailClient({
     unit?: string;
   } | null;
   initialIsFollowing?: boolean;
+  followerCount?: number;
 }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -87,6 +102,13 @@ export default function ProductDetailClient({
   const [chatModalOpen, setChatModalOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState<boolean>(initialIsFollowing);
   const [isFollowingLoading, setIsFollowingLoading] = useState<boolean>(false);
+  const [followersCount, setFollowersCount] = useState<number>(followerCount || 0);
+
+  useEffect(() => {
+    if (followerCount !== undefined) {
+      setFollowersCount(followerCount);
+    }
+  }, [followerCount]);
 
   // Cart store & Auth modal store
   const addToCart = useCartStore((state) => state.addToCart);
@@ -274,10 +296,12 @@ export default function ProductDetailClient({
       } else {
         setIsFollowing(!!result.isFollowing);
         if (result.isFollowing) {
+          setFollowersCount((prev) => prev + 1);
           toast.success(`You are now following ${vendorDisplayName}!`, {
             description: 'You will receive drops and new collection updates from this brand.',
           });
         } else {
+          setFollowersCount((prev) => Math.max(0, prev - 1));
           toast(`Unfollowed ${vendorDisplayName}`, {
             description: 'You will no longer receive collection updates from this designer.',
           });
@@ -352,7 +376,11 @@ export default function ProductDetailClient({
 
   const formattedPrice = `₦${(product.price || 0).toLocaleString()}`;
   const fakeOldPrice = Math.round((product.price || 0) * 1.15);
-  const vendorDisplayName = vendor?.name || 'AVELLIN Premier Brand';
+  const vendorDisplayName = vendor?.business_name || vendor?.name || 'AVELLIN Premier Brand';
+  const vendorId = vendor?.id || product.vendor_id;
+  const sellerScore = vendor?.seller_score ?? 100;
+  const shippingSpeedRating = vendor?.shipping_speed_rating || 'Excellent';
+  const qualityScoreRating = vendor?.quality_score_rating || 'Excellent';
 
   return (
     <div className="flex flex-col min-h-screen bg-linen relative pb-40">
@@ -445,10 +473,19 @@ export default function ProductDetailClient({
             {product.title}
           </h1>
 
-          {/* Vendor byline with verified green checkmark */}
+          {/* Vendor byline with verified green checkmark and link to vendor storefront */}
           <div className="flex items-center gap-1.5 mt-2">
             <span className="text-xs text-neutral-500 font-medium">Crafted by</span>
-            <span className="text-xs font-bold text-charcoal">{vendorDisplayName}</span>
+            {vendorId ? (
+              <Link
+                href={`/vendor/${vendorId}`}
+                className="text-xs font-bold text-charcoal hover:text-terracotta transition underline-offset-2 hover:underline"
+              >
+                {vendorDisplayName}
+              </Link>
+            ) : (
+              <span className="text-xs font-bold text-charcoal">{vendorDisplayName}</span>
+            )}
             <BadgeCheck
               size={15}
               className="text-emerald-600 fill-emerald-100 flex-shrink-0"
@@ -531,23 +568,60 @@ export default function ProductDetailClient({
         </div>
 
         {/* ========================================================= */}
-        {/* VENDOR CONTACT SECTION (Interactive In-App Vendor Chat) */}
+        {/* SELLER INFORMATION CARD (Standard E-Commerce UI) */}
         {/* ========================================================= */}
-        <div className="bg-white rounded-2xl p-5 border border-linen-border shadow-xs hover:shadow-md transition-all duration-300 space-y-3.5">
+        <div className="bg-white rounded-2xl p-5 border border-linen-border shadow-xs hover:shadow-md transition-all duration-300 space-y-4">
+          <div className="flex items-center justify-between border-b border-linen-border pb-3">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-charcoal">
+                Seller Information
+              </h3>
+              <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                Verified
+              </span>
+            </div>
+            {vendorId && (
+              <Link
+                href={`/vendor/${vendorId}`}
+                className="text-xs font-bold text-terracotta hover:underline flex items-center gap-1 transition"
+              >
+                <span>Visit Store</span>
+                <span aria-hidden="true">&rarr;</span>
+              </Link>
+            )}
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-sm shadow-sm flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-extrabold text-sm shadow-sm flex-shrink-0">
                 {vendorDisplayName.slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-sm font-bold text-charcoal">{vendorDisplayName}</h4>
-                  <BadgeCheck size={16} className="text-emerald-600 fill-emerald-100 flex-shrink-0" />
+                  {vendorId ? (
+                    <Link
+                      href={`/vendor/${vendorId}`}
+                      className="text-sm font-bold text-charcoal hover:text-terracotta transition-colors flex items-center gap-1"
+                    >
+                      <span>{vendorDisplayName}</span>
+                      <BadgeCheck size={16} className="text-emerald-600 fill-emerald-100 flex-shrink-0" />
+                    </Link>
+                  ) : (
+                    <>
+                      <h4 className="text-sm font-bold text-charcoal">{vendorDisplayName}</h4>
+                      <BadgeCheck size={16} className="text-emerald-600 fill-emerald-100 flex-shrink-0" />
+                    </>
+                  )}
                 </div>
-                <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Verified Vendor • Quick response rate</span>
-                </p>
+                
+                <div className="flex items-center gap-2 mt-1 text-[11px] text-neutral-500 flex-wrap">
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                    <Sparkles size={11} className="text-emerald-600" />
+                    {sellerScore}% Seller Score
+                  </span>
+                  <span>•</span>
+                  <span>{followersCount.toLocaleString()} {followersCount === 1 ? 'Follower' : 'Followers'}</span>
+                </div>
               </div>
             </div>
 
@@ -571,23 +645,46 @@ export default function ProductDetailClient({
               ) : (
                 <>
                   <UserPlus size={14} />
-                  <span>Follow Designer</span>
+                  <span>Follow</span>
                 </>
               )}
             </button>
           </div>
 
-          <p className="text-xs text-neutral-600 leading-relaxed">
+          {/* Seller Performance List */}
+          <div className="pt-2 border-t border-linen-border">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">
+              Seller Performance
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-100 flex flex-col">
+                <span className="text-[10px] text-neutral-400 font-medium">Shipping Speed</span>
+                <span className="font-bold text-charcoal mt-0.5 flex items-center gap-1 text-emerald-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {shippingSpeedRating}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-100 flex flex-col">
+                <span className="text-[10px] text-neutral-400 font-medium">Quality Score</span>
+                <span className="font-bold text-charcoal mt-0.5 flex items-center gap-1 text-emerald-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {qualityScoreRating}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-neutral-600 leading-relaxed pt-1">
             Have questions regarding custom-fit tailoring, native fabric sourcing, or express waybill dispatch?
-            Chat directly with the vendor in real-time.
+            Chat directly with {vendorDisplayName} in real-time.
           </p>
 
           {/* Interactive In-App Chat Trigger Button */}
           <button
             onClick={handleOpenVendorChat}
-            className="w-full h-12 bg-neutral-900 hover:bg-black text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
+            className="w-full h-11 bg-neutral-900 hover:bg-black text-white rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
           >
-            <MessageCircle size={18} className="text-emerald-400" />
+            <MessageCircle size={16} className="text-emerald-400" />
             <span>Chat In-App with Verified Vendor</span>
           </button>
         </div>

@@ -17,6 +17,13 @@ create table public.profiles (
   vip_tier text default 'Member',
   addresses jsonb default '[]'::jsonb,
   state text default 'Lagos',
+  business_name text,
+  business_address text,
+  city text,
+  seller_score integer default 100,
+  successful_sales integer default 0,
+  shipping_speed_rating text default 'Excellent',
+  quality_score_rating text default 'Excellent',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

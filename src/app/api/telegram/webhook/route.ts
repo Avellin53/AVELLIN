@@ -282,10 +282,89 @@ _Example: Red Ankara Gown | 25000 | Native | Premium quality, 3 days delivery_
 `;
 
           await sendMessage(chatId, tutorialMessage);
+
+          // Storefront profile prompt follow-up
+          const storefrontPrompt = `To officially open your AVELLIN storefront, please send your business details using exactly this format:
+
+*Profile | Business Name | Shop Address | City | State*
+
+_Example: Profile | House of Fash | 12 Admiralty Way | Lekki | Lagos_`;
+
+          await sendMessage(chatId, storefrontPrompt);
         } else {
           await sendMessage(chatId, "⚠️ Authentication failed. This email is not registered as an authorized vendor/brand on AVELLIN.");
         }
         
+        return NextResponse.json({ success: true });
+      } else if (text.toLowerCase().trim().startsWith('profile |')) {
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { persistSession: false } }
+        );
+
+        // 1. Identify the vendor by chat_id
+        const { data: vendorProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('id, name')
+          .eq('telegram_chat_id', chatId.toString())
+          .maybeSingle();
+
+        if (!vendorProfile) {
+          await sendMessage(chatId, "⚠️ Please authenticate first by sending your registered vendor email address.");
+          return NextResponse.json({ success: true });
+        }
+
+        // 2. Parse: "Profile | Business Name | Shop Address | City | State"
+        const parts = text.split('|').map((p: string) => p.trim());
+        const businessName = parts[1] || '';
+        const businessAddress = parts[2] || '';
+        const city = parts[3] || '';
+        const state = parts[4] || '';
+
+        if (!businessName) {
+          await sendMessage(
+            chatId,
+            "⚠️ Business name is required. Please use the format:\n*Profile | Business Name | Shop Address | City | State*"
+          );
+          return NextResponse.json({ success: true });
+        }
+
+        // 3. Update profiles table
+        const updatePayload: any = {
+          business_name: businessName,
+          business_address: businessAddress || null,
+          city: city || null,
+        };
+        if (state) {
+          updatePayload.state = state;
+        }
+
+        const { error: updateError } = await supabaseAdmin
+          .from('profiles')
+          .update(updatePayload)
+          .eq('telegram_chat_id', chatId.toString());
+
+        if (updateError) {
+          console.error("Storefront profile update error:", updateError);
+          await sendMessage(chatId, `⚠️ Failed to update storefront: ${updateError.message}`);
+          return NextResponse.json({ success: true });
+        }
+
+        // Also sync store_name and location in vendors table if existing
+        try {
+          await supabaseAdmin
+            .from('vendors')
+            .update({
+              store_name: businessName,
+              location: `${city ? city + ', ' : ''}${state || ''}`.trim() || undefined,
+            })
+            .eq('owner_id', vendorProfile.id);
+        } catch {
+          // Non-blocking
+        }
+
+        await sendMessage(chatId, "✅ Storefront configured! You are ready to start uploading wears.");
         return NextResponse.json({ success: true });
       } else if (text.includes('|')) {
         const supabaseAdmin = createClient(

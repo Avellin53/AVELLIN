@@ -45,13 +45,25 @@ export default async function ProductPage({
 
   // 2. Fetch vendor details if vendor_id exists
   let vendor: any = null;
+  let followerCount = 0;
   if (product.vendor_id) {
     const { data: vendorData } = await supabase
       .from('profiles')
-      .select('id, name, email, phone')
+      .select('id, name, email, phone, business_name, business_address, city, state, seller_score, successful_sales, shipping_speed_rating, quality_score_rating')
       .eq('id', product.vendor_id)
       .maybeSingle();
     vendor = vendorData;
+
+    try {
+      const { count } = await supabase
+        .from('vendor_follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('vendor_id', product.vendor_id);
+      followerCount = count || 0;
+    } catch (err) {
+      console.warn('Follower count check warning:', err);
+      followerCount = 0;
+    }
   }
 
   // 3. Fetch reviews
@@ -142,6 +154,7 @@ export default async function ProductPage({
       currentUser={user ? { id: user.id, email: user.email } : null}
       sizePassport={userProfile?.size_passport || null}
       initialIsFollowing={initialIsFollowing}
+      followerCount={followerCount}
     />
   );
 }
