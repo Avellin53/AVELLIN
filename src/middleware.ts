@@ -119,6 +119,15 @@ function isAllowedDomain(urlOrOrigin: string, currentHost?: string | null): bool
 }
 
 export async function middleware(request: NextRequest) {
+  // VIP bypass for Gemini routes: ignore auth redirects, CORS blocks, and rate limiting
+  if (
+    request.nextUrl.pathname.startsWith('/api/chat') ||
+    request.nextUrl.pathname.startsWith('/api/color-analysis') ||
+    request.nextUrl.pathname.startsWith('/api/lens')
+  ) {
+    return NextResponse.next();
+  }
+
   const { pathname } = request.nextUrl
   const urlString = request.url
 
