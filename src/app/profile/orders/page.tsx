@@ -63,50 +63,6 @@ const STAGES: OrderStage[] = [
   'Delivered',
 ];
 
-// Fallback demo orders so the reviewer can immediately test the 48hr dispute and 50/50 balance flows
-const DEMO_ORDERS: OrderItem[] = [
-  {
-    id: 'ORD-7291-DISPATCH',
-    status: 'active',
-    stage: 'Ready for Dispatch',
-    delivered_at: null,
-    dispute_status: 'none',
-    split_payment: true,
-    deposit_paid: true,
-    balance_paid: false,
-    deposit_amount: 62500,
-    balance_amount: 62500,
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
-    product: {
-      id: 'prod-demo-1',
-      title: 'Embroidered Regal Agbada Set (3-Piece)',
-      price: 125000,
-      image_url:
-        'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&q=80&w=600',
-    },
-  },
-  {
-    id: 'ORD-5104-DELIVERED',
-    status: 'completed',
-    stage: 'Delivered',
-    delivered_at: new Date(Date.now() - 14 * 3600000).toISOString(), // Delivered 14 hours ago (eligible for 48h dispute!)
-    dispute_status: 'none',
-    split_payment: false,
-    deposit_paid: false,
-    balance_paid: true,
-    deposit_amount: 0,
-    balance_amount: 0,
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    product: {
-      id: 'prod-demo-2',
-      title: 'Sleek Obsidian Senator Kaftan',
-      price: 85000,
-      image_url:
-        'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600',
-    },
-  },
-];
-
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState<'ongoing' | 'disputed' | 'all'>('ongoing');
   const [orders, setOrders] = useState<OrderItem[]>([]);
@@ -130,10 +86,11 @@ export default function OrdersPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        setOrders(DEMO_ORDERS);
+        setOrders([]);
         return;
       }
 
+      // Fetch authentic orders for the authenticated user joined with products
       const { data: dbOrders, error } = await supabase
         .from('orders')
         .select(`
@@ -162,11 +119,49 @@ export default function OrdersPage() {
         .eq('shopper_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error || !dbOrders || dbOrders.length === 0) {
-        // Fallback to sample orders if none in DB
-        setOrders(DEMO_ORDERS);
+      let finalOrders = dbOrders;
+
+      // Resilient fallback query if foreign key join is unconfigured in Postgres
+      if (error) {
+        console.warn('Orders join query note, trying fallback query:', error);
+        const { data: rawOrders, error: rawError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('shopper_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (rawError || !rawOrders) {
+          console.error('Failed to fetch user orders:', rawError);
+          setOrders([]);
+          return;
+        }
+
+        const productIds = Array.from(
+          new Set(rawOrders.map((o: any) => o.product_id).filter(Boolean))
+        );
+        let productMap: Record<string, any> = {};
+        if (productIds.length > 0) {
+          const { data: prods } = await supabase
+            .from('products')
+            .select('id, title, price, image_url')
+            .in('id', productIds);
+          if (prods) {
+            prods.forEach((p: any) => {
+              productMap[p.id] = p;
+            });
+          }
+        }
+
+        finalOrders = rawOrders.map((o: any) => ({
+          ...o,
+          products: productMap[o.product_id] || null,
+        }));
+      }
+
+      if (!finalOrders || finalOrders.length === 0) {
+        setOrders([]);
       } else {
-        const formatted: OrderItem[] = dbOrders.map((o: any) => ({
+        const formatted: OrderItem[] = finalOrders.map((o: any) => ({
           id: o.id,
           shopper_id: o.shopper_id,
           vendor_id: o.vendor_id,
@@ -187,8 +182,8 @@ export default function OrdersPage() {
         setOrders(formatted);
       }
     } catch (err) {
-      console.warn('Orders fetch error, showing mock orders:', err);
-      setOrders(DEMO_ORDERS);
+      console.error('Orders fetch error:', err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -333,21 +328,31 @@ export default function OrdersPage() {
             <div className="w-8 h-8 border-2 border-terracotta border-t-transparent rounded-full animate-spin mb-3" />
             <p className="text-xs text-warmgrey">Loading order timeline...</p>
           </div>
-        ) : filteredOrders.length === 0 ? (
+        ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-2xl border border-linen-border shadow-sm mt-8">
             <div className="w-20 h-20 bg-linen-surface rounded-full flex items-center justify-center mb-4 text-warmgrey border border-linen-border">
               <ShoppingBag size={32} />
             </div>
             <h2 className="text-base font-bold text-charcoal mb-1">No Orders Found</h2>
             <p className="text-xs text-warmgrey max-w-xs mb-6">
-              You do not have any orders matching this category.
+              You have no ongoing orders. Start shopping to find your perfect fit.
             </p>
             <Link
-              href="/home"
+              href="/"
               className="px-6 py-2.5 bg-terracotta text-white rounded-xl text-xs font-bold shadow-md hover:bg-terracotta-dark transition"
             >
-              Browse Luxury Pieces
+              Start Shopping
             </Link>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-2xl border border-linen-border shadow-sm mt-8">
+            <div className="w-20 h-20 bg-linen-surface rounded-full flex items-center justify-center mb-4 text-warmgrey border border-linen-border">
+              <ShoppingBag size={32} />
+            </div>
+            <h2 className="text-base font-bold text-charcoal mb-1">No Matching Orders</h2>
+            <p className="text-xs text-warmgrey max-w-xs mb-6">
+              You do not have any orders matching this category.
+            </p>
           </div>
         ) : (
           filteredOrders.map((order) => {

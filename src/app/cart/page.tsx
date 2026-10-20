@@ -390,7 +390,7 @@ function CartContent() {
               }}
               className="w-full bg-neutral-900 hover:bg-black text-white rounded-2xl h-14 flex items-center justify-center gap-2 font-bold text-sm shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.98] mt-2 cursor-pointer"
             >
-              <span>Proceed to Checkout</span>
+              <span>Proceed to Payment</span>
               <ArrowRight size={18} />
             </button>
 

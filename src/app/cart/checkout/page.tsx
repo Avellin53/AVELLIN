@@ -94,6 +94,28 @@ export default function CheckoutPage() {
   const balanceAmount = total - depositAmount;
   const amountToPayNow = paymentOption === 'split' ? depositAmount : total;
 
+  const loadPaystackScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window !== 'undefined' && window.PaystackPop) {
+        resolve(true);
+        return;
+      }
+      const existing = document.getElementById('paystack-inline-js');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(true));
+        existing.addEventListener('error', () => resolve(false));
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'paystack-inline-js';
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleCompleteOrder = async (reference: string) => {
     setLoading(true);
     try {
@@ -106,7 +128,7 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Record orders for each product in the cart
+      // Record authentic orders for each product in the cart
       const orderPayloads = cartItems.map((item) => ({
         shopper_id: currentUserId,
         vendor_id: item.product.vendor_id || null,
@@ -121,11 +143,13 @@ export default function CheckoutPage() {
         dispute_status: 'none',
       }));
 
-      const { error } = await supabase.from('orders').insert(orderPayloads);
+      const { data: createdOrders, error } = await supabase.from('orders').insert(orderPayloads).select();
 
       if (error) {
         console.error('Error saving order to Supabase:', error);
-        // Continue anyway if database column cache issue, so user experiences zero broken state
+        toast.error('Payment succeeded, but failed to record order: ' + error.message);
+        setLoading(false);
+        return;
       }
 
       // Log security / order transaction audit event
@@ -162,7 +186,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePaystackPayment = () => {
+  const handlePaystackPayment = async () => {
     if (!address.trim() || !phone.trim()) {
       toast.error('Please enter your delivery phone number and street address.');
       return;
@@ -174,6 +198,8 @@ export default function CheckoutPage() {
       return;
     }
 
+    setLoading(true);
+
     const paystackKey =
       process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ||
       process.env.NEXT_PUBLIC_PAYSTACK_KEY ||
@@ -183,35 +209,42 @@ export default function CheckoutPage() {
     const amountInKobo = Math.round(amountToPayNow * 100);
     const orderRef = `AVL-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    if (window.PaystackPop) {
-      const handler = window.PaystackPop.setup({
-        key: paystackKey,
-        email: userEmail,
-        amount: amountInKobo,
-        currency: 'NGN',
-        ref: orderRef,
-        callback: (response) => {
-          handleCompleteOrder(response.reference);
-        },
-        onClose: () => {
-          toast.info('Payment window closed. You can resume anytime.');
-        },
-      });
-      handler.openIframe();
+    const loaded = await loadPaystackScript();
+
+    if (loaded && window.PaystackPop) {
+      try {
+        const handler = window.PaystackPop.setup({
+          key: paystackKey,
+          email: userEmail,
+          amount: amountInKobo,
+          currency: 'NGN',
+          ref: orderRef,
+          callback: (response) => {
+            handleCompleteOrder(response.reference || orderRef);
+          },
+          onClose: () => {
+            setLoading(false);
+            toast.info('Payment window closed. Your cart has been saved.');
+          },
+        });
+        handler.openIframe();
+      } catch (err: any) {
+        console.error('Paystack popup error:', err);
+        setLoading(false);
+        toast.error('Failed to open payment gateway: ' + (err.message || 'Please retry.'));
+      }
     } else {
-      // Graceful fallback for offline / test environments
-      toast.loading('Processing payment through secure gateway...');
-      setTimeout(() => {
-        handleCompleteOrder(orderRef);
-      }, 1200);
+      setLoading(false);
+      toast.error('Payment gateway is unavailable. Please check your internet connection or retry.');
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-linen pb-32">
       <Script
+        id="paystack-inline-js"
         src="https://js.paystack.co/v1/inline.js"
-        strategy="lazyOnload"
+        strategy="afterInteractive"
         onLoad={() => setIsPaystackLoaded(true)}
       />
 
@@ -503,7 +536,7 @@ export default function CheckoutPage() {
                 <>
                   <CreditCard size={15} />
                   <span>
-                    Pay ₦{amountToPayNow.toLocaleString()} via Paystack
+                    Proceed to Payment (₦{amountToPayNow.toLocaleString()})
                   </span>
                 </>
               )}
